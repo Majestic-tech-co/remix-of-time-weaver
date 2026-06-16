@@ -79,13 +79,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tempo — Local-first time tracking" },
+      { title: "majestic time track — Local-first time tracking" },
       { name: "description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
       { name: "author", content: "Tempo" },
-      { property: "og:title", content: "Tempo — Local-first time tracking" },
-      { property: "og:description", content: "Track time across customers, projects, and activities." },
+      { property: "og:title", content: "majestic time track — Local-first time tracking" },
+      { property: "og:description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "majestic time track — Local-first time tracking" },
+      { name: "twitter:description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/afbde8a4-074c-43a4-b5bf-9329d1629959/id-preview-2b6837da--cf43f717-5b7c-4e1c-8387-21ec5eac1fbe.lovable.app-1781639631195.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/afbde8a4-074c-43a4-b5bf-9329d1629959/id-preview-2b6837da--cf43f717-5b7c-4e1c-8387-21ec5eac1fbe.lovable.app-1781639631195.png" },
     ],
     links: [
       {
