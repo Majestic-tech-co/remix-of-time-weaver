@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 export function TimerBar() {
-  const { customers, projects, activities, running } = useAppState();
+  const { customers, projects, running } = useAppState();
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -25,41 +25,28 @@ export function TimerBar() {
     return () => clearInterval(id);
   }, [running]);
 
-  // form state
   const [description, setDescription] = useState("");
   const [customerId, setCustomerId] = useState<string>("");
   const [projectId, setProjectId] = useState<string>("");
-  const [activityId, setActivityId] = useState<string>("");
   const [billable, setBillable] = useState(true);
 
   const activeCustomers = customers.filter((c) => c.active);
   const filteredProjects = projects.filter((p) => p.active && p.customerId === customerId);
-  const availableActivities = activities.filter((a) => a.projectId === null || a.projectId === projectId);
 
-  // When running, derive display from running state
   const liveSeconds = running ? Math.floor((Date.now() - running.startTime) / 1000) : 0;
   const liveProject = running ? projects.find((p) => p.id === running.projectId) : null;
   const liveCustomer = liveProject ? customers.find((c) => c.id === liveProject.customerId) : null;
-  const liveActivity = running ? activities.find((a) => a.id === running.activityId) : null;
-  const liveRate = running
-    ? resolveRate({ customerId: liveCustomer?.id ?? null, activityId: running.activityId })
-    : 0;
+  const liveRate = running ? resolveRate({ customerId: liveCustomer?.id ?? null }) : 0;
   const liveEarnings = running && running.billable ? (liveSeconds / 3600) * liveRate : 0;
 
   void tick;
 
   function handleStart() {
-    if (!customerId || !projectId || !activityId) {
-      toast.error("Pick a customer, project, and activity first.");
+    if (!customerId || !projectId) {
+      toast.error("Pick a customer and project first.");
       return;
     }
-    timerActions.start({
-      description,
-      customerId,
-      projectId,
-      activityId,
-      billable,
-    });
+    timerActions.start({ description, customerId, projectId, billable });
     toast.success("Timer started");
   }
 
@@ -87,7 +74,7 @@ export function TimerBar() {
                 {running.description || <span className="text-muted-foreground italic">No description</span>}
               </div>
               <div className="truncate text-xs text-muted-foreground mt-0.5">
-                {liveCustomer?.name} · {liveProject?.name} · {liveActivity?.name}
+                {liveCustomer?.name} · {liveProject?.name}
               </div>
             </div>
           </div>
@@ -123,10 +110,10 @@ export function TimerBar() {
             className="bg-background"
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:w-[540px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:w-[420px]">
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Customer</Label>
-            <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setProjectId(""); setActivityId(""); }}>
+            <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setProjectId(""); }}>
               <SelectTrigger className="bg-background"><SelectValue placeholder="Select" /></SelectTrigger>
               <SelectContent>
                 {activeCustomers.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">No customers yet</div>}
@@ -136,20 +123,11 @@ export function TimerBar() {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Project</Label>
-            <Select value={projectId} onValueChange={(v) => { setProjectId(v); setActivityId(""); }} disabled={!customerId}>
+            <Select value={projectId} onValueChange={setProjectId} disabled={!customerId}>
               <SelectTrigger className="bg-background"><SelectValue placeholder={customerId ? "Select" : "Pick customer"} /></SelectTrigger>
               <SelectContent>
                 {filteredProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                 {customerId && filteredProjects.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">No projects</div>}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Activity</Label>
-            <Select value={activityId} onValueChange={setActivityId} disabled={!projectId}>
-              <SelectTrigger className="bg-background"><SelectValue placeholder={projectId ? "Select" : "Pick project"} /></SelectTrigger>
-              <SelectContent>
-                {availableActivities.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

@@ -1,13 +1,12 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { Customer, Project, Activity, Timesheet } from "./types";
+import type { Customer, Project, Timesheet } from "./types";
 import { formatDate, formatHours, formatMoney } from "./format";
 
 export interface InvoiceInput {
   customer: Customer;
   entries: Timesheet[];
   projects: Project[];
-  activities: Activity[];
   invoiceNumber?: string;
   issueDate?: Date;
   dueInDays?: number;
@@ -20,7 +19,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
     customer,
     entries,
     projects,
-    activities,
     invoiceNumber = `INV-${Date.now().toString().slice(-6)}`,
     issueDate = new Date(),
     dueInDays = 14,
@@ -37,7 +35,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 40;
 
-  // Header
   doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
   doc.text("INVOICE", margin, 60);
@@ -47,7 +44,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   doc.setTextColor(110);
   doc.text(`#${invoiceNumber}`, margin, 78);
 
-  // From (right)
   doc.setTextColor(0);
   doc.setFont("helvetica", "bold");
   doc.text("From", pageWidth - margin, 60, { align: "right" });
@@ -56,7 +52,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   const fromLines = [from.name, from.email, from.address].filter(Boolean) as string[];
   fromLines.forEach((l, i) => doc.text(l, pageWidth - margin, 76 + i * 14, { align: "right" }));
 
-  // Bill To
   let y = 120;
   doc.setTextColor(110);
   doc.setFont("helvetica", "bold");
@@ -69,7 +64,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   doc.setTextColor(80);
   doc.text(customer.name, margin, y + 32);
 
-  // Meta (right)
   doc.setTextColor(110);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -80,15 +74,13 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   doc.text(formatDate(issueDate.getTime()), pageWidth - margin - 120, y + 16);
   doc.text(formatDate(due.getTime()), pageWidth - margin, y + 16, { align: "right" });
 
-  // Table
   const rows = billable.map((e) => {
     const project = projects.find((p) => p.id === e.projectId);
-    const activity = activities.find((a) => a.id === e.activityId);
     const hours = e.duration / 3600;
     const amount = hours * e.hourlyRate;
     return [
       formatDate(e.startTime),
-      `${project?.name ?? "—"}${activity ? ` · ${activity.name}` : ""}${e.description ? `\n${e.description}` : ""}`,
+      `${project?.name ?? "—"}${e.description ? `\n${e.description}` : ""}`,
       hours.toFixed(2),
       formatMoney(e.hourlyRate, currency),
       formatMoney(amount, currency),
@@ -113,7 +105,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
     margin: { left: margin, right: margin },
   });
 
-  // Totals
   // @ts-expect-error lastAutoTable is added by autoTable plugin
   const endY: number = doc.lastAutoTable.finalY + 20;
   const labelX = pageWidth - margin - 140;
@@ -149,7 +140,6 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
     doc.text(wrapped, margin, endY + 96);
   }
 
-  // Footer
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.setFontSize(8);
   doc.setTextColor(140);

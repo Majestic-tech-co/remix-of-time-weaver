@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { AppState, Customer, Project, Activity, Timesheet, RunningTimer } from "./types";
+import type { AppState, Customer, Project, Timesheet, RunningTimer } from "./types";
 
 const KEY = "timetracker.state.v1";
 
@@ -13,13 +13,10 @@ function seed(): AppState {
   const proj1: Project = { id: uid(), customerId: cust1.id, name: "Website Redesign", budgetType: "hours", budget: 80, active: true };
   const proj2: Project = { id: uid(), customerId: cust1.id, name: "Mobile App", budgetType: "money", budget: 25000, active: true };
   const proj3: Project = { id: uid(), customerId: cust2.id, name: "Internal Tools", budgetType: "hours", budget: 40, active: true };
-  const act1: Activity = { id: uid(), projectId: null, name: "Development", hourlyRate: null };
-  const act2: Activity = { id: uid(), projectId: null, name: "Design", hourlyRate: 110 };
-  const act3: Activity = { id: uid(), projectId: null, name: "Meetings", hourlyRate: null };
   return {
     customers: [cust1, cust2],
     projects: [proj1, proj2, proj3],
-    activities: [act1, act2, act3],
+    activities: [],
     timesheets: [],
     running: null,
   };
@@ -36,7 +33,9 @@ function load(): AppState {
       localStorage.setItem(KEY, JSON.stringify(s));
       return s;
     }
-    return JSON.parse(raw) as AppState;
+    const parsed = JSON.parse(raw) as AppState;
+    if (!parsed.activities) parsed.activities = [];
+    return parsed;
   } catch {
     return seed();
   }
@@ -71,18 +70,10 @@ export function useAppState(): AppState {
   return useSyncExternalStore(subscribe, () => state, () => serverSnap);
 }
 
-// ---------- Rate hierarchy ----------
-export function resolveRate(opts: {
-  customerId: string | null;
-  activityId: string | null;
-}): number {
-  const { customers, activities } = state;
-  if (opts.activityId) {
-    const a = activities.find((x) => x.id === opts.activityId);
-    if (a && a.hourlyRate != null) return a.hourlyRate;
-  }
+// Rate hierarchy: customer's hourly rate (activities removed)
+export function resolveRate(opts: { customerId: string | null }): number {
   if (opts.customerId) {
-    const c = customers.find((x) => x.id === opts.customerId);
+    const c = state.customers.find((x) => x.id === opts.customerId);
     if (c) return c.hourlyRate;
   }
   return 0;
@@ -115,21 +106,6 @@ export const projectActions = {
   },
   remove(id: string) {
     setState((s) => ({ ...s, projects: s.projects.filter((p) => p.id !== id) }));
-  },
-};
-
-// ---------- Activities ----------
-export const activityActions = {
-  create(input: Omit<Activity, "id">) {
-    const a: Activity = { ...input, id: uid() };
-    setState((s) => ({ ...s, activities: [...s.activities, a] }));
-    return a;
-  },
-  update(id: string, patch: Partial<Activity>) {
-    setState((s) => ({ ...s, activities: s.activities.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
-  },
-  remove(id: string) {
-    setState((s) => ({ ...s, activities: s.activities.filter((a) => a.id !== id) }));
   },
 };
 
@@ -167,17 +143,16 @@ export const timerActions = {
   },
   stop(): Timesheet | null {
     const r = state.running;
-    if (!r || !r.projectId || !r.activityId) {
+    if (!r || !r.projectId) {
       setState((s) => ({ ...s, running: null }));
       return null;
     }
     const project = state.projects.find((p) => p.id === r.projectId);
-    const rate = resolveRate({ customerId: project?.customerId ?? null, activityId: r.activityId });
+    const rate = resolveRate({ customerId: project?.customerId ?? null });
     const end = Date.now();
     const t: Timesheet = {
       id: uid(),
       projectId: r.projectId,
-      activityId: r.activityId,
       description: r.description,
       startTime: r.startTime,
       endTime: end,
