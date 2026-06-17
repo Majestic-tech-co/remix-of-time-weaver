@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, FileDown } from "lucide-react";
 import { useAppState, timesheetActions } from "@/lib/store";
 import { TimesheetTable } from "@/components/timesheet-table";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { resolveRate } from "@/lib/store";
+import { generateInvoicePdf } from "@/lib/invoice";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/timesheets")({
