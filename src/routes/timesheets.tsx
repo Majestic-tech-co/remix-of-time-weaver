@@ -55,7 +55,7 @@ function TimesheetsPage() {
           <p className="text-sm text-muted-foreground mt-1">Browse, filter, and back-log time.</p>
         </div>
         <div className="flex items-center gap-2">
-          <InvoiceDialog entries={filtered} customerId={customerFilter} />
+          <InvoiceDialog />
           <AddEntryDialog />
         </div>
       </div>
