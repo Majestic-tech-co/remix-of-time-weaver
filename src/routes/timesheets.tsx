@@ -54,7 +54,10 @@ function TimesheetsPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Timesheets</h1>
           <p className="text-sm text-muted-foreground mt-1">Browse, filter, and back-log time.</p>
         </div>
-        <AddEntryDialog />
+        <div className="flex items-center gap-2">
+          <InvoiceDialog entries={filtered} customerId={customerFilter} />
+          <AddEntryDialog />
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
