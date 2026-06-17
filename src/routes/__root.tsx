@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "majestic time track — Local-first time tracking" },
       { name: "description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
-      { name: "author", content: "Tempo" },
+      { name: "author", content: "Majestic" },
       { property: "og:title", content: "majestic time track — Local-first time tracking" },
       { property: "og:description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
       { property: "og:type", content: "website" },

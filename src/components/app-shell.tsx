@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Timer className="h-5 w-5" />
           </div>
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight">Tempo</div>
+            <div className="text-sm font-semibold tracking-tight">Majestic</div>
             <div className="text-[11px] text-muted-foreground">Time tracking</div>
           </div>
         </div>
@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
             <Timer className="h-4 w-4" />
           </div>
-          <span className="font-semibold">Tempo</span>
+          <span className="font-semibold">Majestic</span>
         </header>
         <nav className="md:hidden flex overflow-x-auto gap-1 px-3 py-2 border-b border-border bg-sidebar">
           {nav.map((item) => {

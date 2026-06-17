@@ -13,7 +13,7 @@ import type { Customer } from "@/lib/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/customers")({
-  head: () => ({ meta: [{ title: "Customers · Tempo" }] }),
+  head: () => ({ meta: [{ title: "Customers · Majestic" }] }),
   component: CustomersPage,
 });
 

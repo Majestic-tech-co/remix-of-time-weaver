@@ -10,7 +10,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard · Tempo" },
+      { title: "Dashboard · Majestic" },
       { name: "description", content: "Your weekly time tracking dashboard." },
     ],
   }),
