@@ -16,7 +16,7 @@ import { generateInvoicePdf } from "@/lib/invoice";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/timesheets")({
-  head: () => ({ meta: [{ title: "Timesheets · Tempo" }] }),
+  head: () => ({ meta: [{ title: "Timesheets · Majestic" }] }),
   component: TimesheetsPage,
 });
 

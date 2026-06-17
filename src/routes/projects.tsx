@@ -14,7 +14,7 @@ import type { Project } from "@/lib/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/projects")({
-  head: () => ({ meta: [{ title: "Projects · Tempo" }] }),
+  head: () => ({ meta: [{ title: "Projects · Majestic" }] }),
   component: ProjectsPage,
 });
 

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/activities")({
-  head: () => ({ meta: [{ title: "Activities · Tempo" }] }),
+  head: () => ({ meta: [{ title: "Activities · Majestic" }] }),
   component: ActivitiesPage,
 });
 
