@@ -206,37 +206,46 @@ function AddEntryDialog() {
   );
 }
 
-function InvoiceDialog({ entries, customerId }: { entries: import("@/lib/types").Timesheet[]; customerId: string }) {
-  const { customers, projects, activities } = useAppState();
+function InvoiceDialog() {
+  const { customers, projects, activities, timesheets } = useAppState();
   const [open, setOpen] = useState(false);
+  const [customerId, setCustomerId] = useState("");
+  const [from, setFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [invoiceNumber, setInvoiceNumber] = useState(`INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`);
   const [fromName, setFromName] = useState("Your Company");
   const [fromEmail, setFromEmail] = useState("");
   const [fromAddress, setFromAddress] = useState("");
   const [dueInDays, setDueInDays] = useState(14);
   const [notes, setNotes] = useState("Thank you for your business.");
+  const [includeNonBillable, setIncludeNonBillable] = useState(false);
 
   const customer = customers.find((c) => c.id === customerId);
-  const billableEntries = entries.filter((e) => e.billable);
-  const customerEntries = customer
-    ? billableEntries.filter((e) => {
-        const p = projects.find((pr) => pr.id === e.projectId);
-        return p?.customerId === customer.id;
-      })
+  const fromTs = from ? new Date(from).getTime() : -Infinity;
+  const toTs = to ? new Date(to).getTime() + 86_400_000 : Infinity;
+
+  const matchingEntries = customer
+    ? timesheets
+        .filter((e) => {
+          const p = projects.find((pr) => pr.id === e.projectId);
+          if (p?.customerId !== customer.id) return false;
+          if (!includeNonBillable && !e.billable) return false;
+          if (e.startTime < fromTs || e.startTime > toTs) return false;
+          return true;
+        })
+        .sort((a, b) => a.startTime - b.startTime)
     : [];
 
   function exportPdf() {
-    if (!customer) {
-      toast.error("Select a customer in the filters first.");
-      return;
-    }
-    if (customerEntries.length === 0) {
-      toast.error("No billable entries match your filters.");
-      return;
-    }
+    if (!customer) { toast.error("Choose a customer."); return; }
+    if (matchingEntries.length === 0) { toast.error("No entries in this date range."); return; }
     const doc = generateInvoicePdf({
       customer,
-      entries: customerEntries,
+      entries: matchingEntries,
       projects,
       activities,
       invoiceNumber,
@@ -254,17 +263,42 @@ function InvoiceDialog({ entries, customerId }: { entries: import("@/lib/types")
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2"><FileDown className="h-4 w-4" /> Export invoice</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Generate invoice PDF</DialogTitle>
           <DialogDescription>
             {customer
-              ? `Billing ${customer.company || customer.name} for ${customerEntries.length} billable ${customerEntries.length === 1 ? "entry" : "entries"} matching your current filters.`
-              : "Filter by a specific customer above to enable invoice generation."}
+              ? `${matchingEntries.length} billable ${matchingEntries.length === 1 ? "entry" : "entries"} found for ${customer.company || customer.name} in the selected range.`
+              : "Pick a customer and the billing period."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Customer</Label>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger><SelectValue placeholder="Select a customer..." /></SelectTrigger>
+              <SelectContent>
+                {customers.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Billing from</Label>
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Billing to</Label>
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch id="inc-nonbillable" checked={includeNonBillable} onCheckedChange={setIncludeNonBillable} />
+            <Label htmlFor="inc-nonbillable" className="text-sm">Include non-billable entries</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Invoice number</Label>
               <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
@@ -295,7 +329,7 @@ function InvoiceDialog({ entries, customerId }: { entries: import("@/lib/types")
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={exportPdf} disabled={!customer || customerEntries.length === 0} className="gap-2">
+          <Button onClick={exportPdf} disabled={!customer || matchingEntries.length === 0} className="gap-2">
             <FileDown className="h-4 w-4" /> Download PDF
           </Button>
         </DialogFooter>
@@ -303,3 +337,4 @@ function InvoiceDialog({ entries, customerId }: { entries: import("@/lib/types")
     </Dialog>
   );
 }
+
