@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Clock, Users, FolderKanban, ListChecks, Timer } from "lucide-react";
+import { LayoutDashboard, Clock, Users, FolderKanban, Timer } from "lucide-react";
 import type { ReactNode } from "react";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
@@ -8,7 +8,6 @@ const nav: NavItem[] = [
   { to: "/timesheets", label: "Timesheets", icon: Clock },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/projects", label: "Projects", icon: FolderKanban },
-  { to: "/activities", label: "Activities", icon: ListChecks },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

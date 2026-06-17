@@ -18,9 +18,11 @@ export interface Project {
   active: boolean;
 }
 
+// Kept for backward-compat with previously-stored timesheets; no longer
+// surfaced in the UI.
 export interface Activity {
   id: ID;
-  projectId: ID | null; // null = global
+  projectId: ID | null;
   name: string;
   hourlyRate: number | null;
 }
@@ -28,11 +30,11 @@ export interface Activity {
 export interface Timesheet {
   id: ID;
   projectId: ID;
-  activityId: ID;
+  activityId?: ID; // legacy, optional
   description: string;
-  startTime: number; // ms epoch
-  endTime: number;   // ms epoch
-  duration: number;  // seconds
+  startTime: number;
+  endTime: number;
+  duration: number;
   hourlyRate: number;
   billable: boolean;
 }
@@ -42,14 +44,13 @@ export interface RunningTimer {
   description: string;
   customerId: ID | null;
   projectId: ID | null;
-  activityId: ID | null;
   billable: boolean;
 }
 
 export interface AppState {
   customers: Customer[];
   projects: Project[];
-  activities: Activity[];
+  activities: Activity[]; // legacy, kept for stored data
   timesheets: Timesheet[];
   running: RunningTimer | null;
 }

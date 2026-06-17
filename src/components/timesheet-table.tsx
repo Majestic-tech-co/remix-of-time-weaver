@@ -8,10 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import type { Timesheet } from "@/lib/types";
 
 export function TimesheetRow({ entry }: { entry: Timesheet }) {
-  const { projects, customers, activities } = useAppState();
+  const { projects, customers } = useAppState();
   const project = projects.find((p) => p.id === entry.projectId);
   const customer = project ? customers.find((c) => c.id === project.customerId) : undefined;
-  const activity = activities.find((a) => a.id === entry.activityId);
   const earnings = entry.billable ? (entry.duration / 3600) * entry.hourlyRate : 0;
 
   const [editing, setEditing] = useState(false);
@@ -32,7 +31,6 @@ export function TimesheetRow({ entry }: { entry: Timesheet }) {
       <tr className="border-b border-border bg-accent/30">
         <td className="px-3 py-2"><Input value={desc} onChange={(e) => setDesc(e.target.value)} className="h-8" /></td>
         <td className="px-3 py-2 text-sm text-muted-foreground">{customer?.name}<br /><span className="text-foreground">{project?.name}</span></td>
-        <td className="px-3 py-2 text-sm">{activity?.name}</td>
         <td className="px-3 py-2"><Input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} className="h-8 text-xs" /></td>
         <td className="px-3 py-2"><Input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} className="h-8 text-xs" /></td>
         <td className="px-3 py-2 text-right tabular-nums clock">{formatDuration(entry.duration)}</td>
@@ -56,7 +54,6 @@ export function TimesheetRow({ entry }: { entry: Timesheet }) {
         <div className="text-muted-foreground text-xs">{customer?.name ?? "—"}</div>
         <div>{project?.name ?? "—"}</div>
       </td>
-      <td className="px-3 py-2.5 text-sm">{activity?.name ?? "—"}</td>
       <td className="px-3 py-2.5 text-xs text-muted-foreground tabular-nums">{formatDateTime(entry.startTime)}</td>
       <td className="px-3 py-2.5 text-xs text-muted-foreground tabular-nums">{formatDateTime(entry.endTime)}</td>
       <td className="px-3 py-2.5 text-right tabular-nums clock text-sm">{formatDuration(entry.duration)}</td>
@@ -96,7 +93,6 @@ export function TimesheetTable({ entries, empty }: { entries: Timesheet[]; empty
             <tr>
               <th className="px-3 py-2.5 text-left font-medium">Description</th>
               <th className="px-3 py-2.5 text-left font-medium">Customer / Project</th>
-              <th className="px-3 py-2.5 text-left font-medium">Activity</th>
               <th className="px-3 py-2.5 text-left font-medium">Start</th>
               <th className="px-3 py-2.5 text-left font-medium">End</th>
               <th className="px-3 py-2.5 text-right font-medium">Duration</th>
