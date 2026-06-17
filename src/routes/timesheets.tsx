@@ -21,7 +21,7 @@ export const Route = createFileRoute("/timesheets")({
 });
 
 function TimesheetsPage() {
-  const { timesheets, customers, projects, activities } = useAppState();
+  const { timesheets, customers, projects } = useAppState();
   const [q, setQ] = useState("");
   const [customerFilter, setCustomerFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
@@ -113,38 +113,34 @@ function TimesheetsPage() {
       <TimesheetTable entries={filtered} empty="No entries match your filters." />
     </div>
   );
-
-  void activities;
 }
 
 function AddEntryDialog() {
-  const { customers, projects, activities } = useAppState();
+  const { customers, projects } = useAppState();
   const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [projectId, setProjectId] = useState("");
-  const [activityId, setActivityId] = useState("");
   const [billable, setBillable] = useState(true);
   const [start, setStart] = useState(toLocalInput(Date.now() - 3600000));
   const [end, setEnd] = useState(toLocalInput(Date.now()));
 
   const filteredProjects = projects.filter((p) => p.customerId === customerId);
-  const filteredActivities = activities.filter((a) => a.projectId === null || a.projectId === projectId);
 
   function submit() {
-    if (!customerId || !projectId || !activityId) { toast.error("Select customer, project, activity."); return; }
+    if (!customerId || !projectId) { toast.error("Select a customer and project."); return; }
     const s = fromLocalInput(start);
     const e = fromLocalInput(end);
     if (e <= s) { toast.error("End must be after start."); return; }
-    const rate = resolveRate({ customerId, activityId });
+    const rate = resolveRate({ customerId });
     timesheetActions.create({
-      projectId, activityId, description: desc,
+      projectId, description: desc,
       startTime: s, endTime: e, duration: Math.round((e - s) / 1000),
       hourlyRate: rate, billable,
     });
     toast.success("Entry added");
     setOpen(false);
-    setDesc(""); setCustomerId(""); setProjectId(""); setActivityId("");
+    setDesc(""); setCustomerId(""); setProjectId("");
   }
 
   return (
@@ -159,26 +155,19 @@ function AddEntryDialog() {
             <Label className="text-xs text-muted-foreground mb-1.5 block">Description</Label>
             <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="What did you do?" />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Customer</Label>
-              <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setProjectId(""); setActivityId(""); }}>
+              <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setProjectId(""); }}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>{customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Project</Label>
-              <Select value={projectId} onValueChange={(v) => { setProjectId(v); setActivityId(""); }} disabled={!customerId}>
+              <Select value={projectId} onValueChange={setProjectId} disabled={!customerId}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>{filteredProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Activity</Label>
-              <Select value={activityId} onValueChange={setActivityId} disabled={!projectId}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>{filteredActivities.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
@@ -207,7 +196,7 @@ function AddEntryDialog() {
 }
 
 function InvoiceDialog() {
-  const { customers, projects, activities, timesheets } = useAppState();
+  const { customers, projects, timesheets } = useAppState();
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState("");
   const [from, setFrom] = useState(() => {
@@ -247,7 +236,6 @@ function InvoiceDialog() {
       customer,
       entries: matchingEntries,
       projects,
-      activities,
       invoiceNumber,
       dueInDays,
       from: { name: fromName, email: fromEmail || undefined, address: fromAddress || undefined },
