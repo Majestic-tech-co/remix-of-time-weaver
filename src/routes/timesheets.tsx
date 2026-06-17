@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, FileDown } from "lucide-react";
 import { useAppState, timesheetActions } from "@/lib/store";
 import { TimesheetTable } from "@/components/timesheet-table";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { resolveRate } from "@/lib/store";
+import { generateInvoicePdf } from "@/lib/invoice";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/timesheets")({
@@ -52,7 +54,10 @@ function TimesheetsPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Timesheets</h1>
           <p className="text-sm text-muted-foreground mt-1">Browse, filter, and back-log time.</p>
         </div>
-        <AddEntryDialog />
+        <div className="flex items-center gap-2">
+          <InvoiceDialog entries={filtered} customerId={customerFilter} />
+          <AddEntryDialog />
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
@@ -195,6 +200,104 @@ function AddEntryDialog() {
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
           <Button onClick={submit}>Save entry</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InvoiceDialog({ entries, customerId }: { entries: import("@/lib/types").Timesheet[]; customerId: string }) {
+  const { customers, projects, activities } = useAppState();
+  const [open, setOpen] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`);
+  const [fromName, setFromName] = useState("Your Company");
+  const [fromEmail, setFromEmail] = useState("");
+  const [fromAddress, setFromAddress] = useState("");
+  const [dueInDays, setDueInDays] = useState(14);
+  const [notes, setNotes] = useState("Thank you for your business.");
+
+  const customer = customers.find((c) => c.id === customerId);
+  const billableEntries = entries.filter((e) => e.billable);
+  const customerEntries = customer
+    ? billableEntries.filter((e) => {
+        const p = projects.find((pr) => pr.id === e.projectId);
+        return p?.customerId === customer.id;
+      })
+    : [];
+
+  function exportPdf() {
+    if (!customer) {
+      toast.error("Select a customer in the filters first.");
+      return;
+    }
+    if (customerEntries.length === 0) {
+      toast.error("No billable entries match your filters.");
+      return;
+    }
+    const doc = generateInvoicePdf({
+      customer,
+      entries: customerEntries,
+      projects,
+      activities,
+      invoiceNumber,
+      dueInDays,
+      from: { name: fromName, email: fromEmail || undefined, address: fromAddress || undefined },
+      notes: notes || undefined,
+    });
+    doc.save(`${invoiceNumber}-${customer.name.replace(/\s+/g, "_")}.pdf`);
+    toast.success("Invoice downloaded");
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-2"><FileDown className="h-4 w-4" /> Export invoice</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Generate invoice PDF</DialogTitle>
+          <DialogDescription>
+            {customer
+              ? `Billing ${customer.company || customer.name} for ${customerEntries.length} billable ${customerEntries.length === 1 ? "entry" : "entries"} matching your current filters.`
+              : "Filter by a specific customer above to enable invoice generation."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Invoice number</Label>
+              <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Due in (days)</Label>
+              <Input type="number" min={0} value={dueInDays} onChange={(e) => setDueInDays(Number(e.target.value) || 0)} />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Your name / company</Label>
+            <Input value={fromName} onChange={(e) => setFromName(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Your email</Label>
+              <Input value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} placeholder="billing@..." />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Your address</Label>
+              <Input value={fromAddress} onChange={(e) => setFromAddress(e.target.value)} placeholder="Optional" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Notes</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={exportPdf} disabled={!customer || customerEntries.length === 0} className="gap-2">
+            <FileDown className="h-4 w-4" /> Download PDF
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
