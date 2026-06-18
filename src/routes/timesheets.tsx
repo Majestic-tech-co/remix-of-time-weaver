@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { resolveRate } from "@/lib/store";
 import { generateInvoicePdf } from "@/lib/invoice";
@@ -174,11 +175,11 @@ function AddEntryDialog() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Start</Label>
-              <Input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
+              <DateTimePicker value={start} onChange={setStart} />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">End</Label>
-              <Input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
+              <DateTimePicker value={end} onChange={setEnd} />
             </div>
           </div>
           <div className="flex items-center gap-2">
