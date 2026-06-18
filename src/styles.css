@@ -103,3 +103,10 @@
   .font-mono, .tabular-nums { font-variant-numeric: tabular-nums; }
   .clock { font-family: var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 }
+
+/* Hide the native calendar picker on custom datetime inputs so the custom button is the only visible trigger. */
+.datetime-picker-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
