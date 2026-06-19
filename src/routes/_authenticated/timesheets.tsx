@@ -16,7 +16,7 @@ import { resolveRate } from "@/lib/store";
 import { generateInvoicePdf } from "@/lib/invoice";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/timesheets")({
+export const Route = createFileRoute("/_authenticated/timesheets")({
   head: () => ({ meta: [{ title: "Timesheets · Majestic" }] }),
   component: TimesheetsPage,
 });

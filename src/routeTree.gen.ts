@@ -10,73 +10,79 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrustRouteImport } from './routes/trust'
-import { Route as TimesheetsRouteImport } from './routes/timesheets'
-import { Route as ProjectsRouteImport } from './routes/projects'
-import { Route as CustomersRouteImport } from './routes/customers'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTimesheetsRouteImport } from './routes/_authenticated/timesheets'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
   path: '/trust',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TimesheetsRoute = TimesheetsRouteImport.update({
-  id: '/timesheets',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTimesheetsRoute = AuthenticatedTimesheetsRouteImport.update({
+  id: '/_authenticated/timesheets',
   path: '/timesheets',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsRoute = ProjectsRouteImport.update({
-  id: '/projects',
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/_authenticated/projects',
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CustomersRoute = CustomersRouteImport.update({
-  id: '/customers',
+const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
+  id: '/_authenticated/customers',
   path: '/customers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/customers': typeof CustomersRoute
-  '/projects': typeof ProjectsRoute
-  '/timesheets': typeof TimesheetsRoute
   '/trust': typeof TrustRoute
+  '/customers': typeof AuthenticatedCustomersRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/customers': typeof CustomersRoute
-  '/projects': typeof ProjectsRoute
-  '/timesheets': typeof TimesheetsRoute
   '/trust': typeof TrustRoute
+  '/customers': typeof AuthenticatedCustomersRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/customers': typeof CustomersRoute
-  '/projects': typeof ProjectsRoute
-  '/timesheets': typeof TimesheetsRoute
   '/trust': typeof TrustRoute
+  '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/customers' | '/projects' | '/timesheets' | '/trust'
+  fullPaths: '/trust' | '/customers' | '/projects' | '/timesheets' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/customers' | '/projects' | '/timesheets' | '/trust'
-  id: '__root__' | '/' | '/customers' | '/projects' | '/timesheets' | '/trust'
+  to: '/trust' | '/customers' | '/projects' | '/timesheets' | '/'
+  id:
+    | '__root__'
+    | '/trust'
+    | '/_authenticated/customers'
+    | '/_authenticated/projects'
+    | '/_authenticated/timesheets'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CustomersRoute: typeof CustomersRoute
-  ProjectsRoute: typeof ProjectsRoute
-  TimesheetsRoute: typeof TimesheetsRoute
   TrustRoute: typeof TrustRoute
+  AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedTimesheetsRoute: typeof AuthenticatedTimesheetsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -88,43 +94,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrustRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/timesheets': {
-      id: '/timesheets'
-      path: '/timesheets'
-      fullPath: '/timesheets'
-      preLoaderRoute: typeof TimesheetsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/customers': {
-      id: '/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof CustomersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/timesheets': {
+      id: '/_authenticated/timesheets'
+      path: '/timesheets'
+      fullPath: '/timesheets'
+      preLoaderRoute: typeof AuthenticatedTimesheetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/customers': {
+      id: '/_authenticated/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CustomersRoute: CustomersRoute,
-  ProjectsRoute: ProjectsRoute,
-  TimesheetsRoute: TimesheetsRoute,
   TrustRoute: TrustRoute,
+  AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedTimesheetsRoute: AuthenticatedTimesheetsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
