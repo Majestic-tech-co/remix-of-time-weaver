@@ -160,9 +160,9 @@ export const customerActions = {
     if (patch.currency !== undefined) db.currency = patch.currency;
     if (patch.hourlyRate !== undefined) db.hourly_rate = patch.hourlyRate;
     if (patch.active !== undefined) db.active = patch.active;
-    const { data, error } = await supabase.from("customers").update(db).eq("id", id).select().single();
+    const { data, error } = await supabase.from("customers").update(db as never).eq("id", id).select().single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
-    setState({ ...state, customers: state.customers.map((c) => c.id === id ? mapCustomer(data) : c) });
+    setState({ ...state, customers: state.customers.map((c) => c.id === id ? mapCustomer(data as DbCustomer) : c) });
   },
   async remove(id: string) {
     const { error } = await supabase.from("customers").delete().eq("id", id);
@@ -180,7 +180,7 @@ export const projectActions = {
       budget_type: input.budgetType, budget: input.budget, active: input.active,
     }).select().single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
-    setState({ ...state, projects: [...state.projects, mapProject(data)] });
+    setState({ ...state, projects: [...state.projects, mapProject(data as DbProject)] });
   },
   async update(id: string, patch: Partial<Project>) {
     const db: Record<string, unknown> = {};
@@ -189,9 +189,9 @@ export const projectActions = {
     if (patch.budgetType !== undefined) db.budget_type = patch.budgetType;
     if (patch.budget !== undefined) db.budget = patch.budget;
     if (patch.active !== undefined) db.active = patch.active;
-    const { data, error } = await supabase.from("projects").update(db).eq("id", id).select().single();
+    const { data, error } = await supabase.from("projects").update(db as never).eq("id", id).select().single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
-    setState({ ...state, projects: state.projects.map((p) => p.id === id ? mapProject(data) : p) });
+    setState({ ...state, projects: state.projects.map((p) => p.id === id ? mapProject(data as DbProject) : p) });
   },
   async remove(id: string) {
     const { error } = await supabase.from("projects").delete().eq("id", id);
@@ -226,9 +226,9 @@ export const timesheetActions = {
       const e = patch.endTime ?? existing?.endTime ?? 0;
       db.duration = Math.max(0, Math.round((e - s) / 1000));
     }
-    const { data, error } = await supabase.from("timesheets").update(db).eq("id", id).select().single();
+    const { data, error } = await supabase.from("timesheets").update(db as never).eq("id", id).select().single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
-    setState({ ...state, timesheets: state.timesheets.map((t) => t.id === id ? mapTimesheet(data) : t) });
+    setState({ ...state, timesheets: state.timesheets.map((t) => t.id === id ? mapTimesheet(data as DbTimesheet) : t) });
   },
   async remove(id: string) {
     const { error } = await supabase.from("timesheets").delete().eq("id", id);
