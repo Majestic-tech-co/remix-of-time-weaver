@@ -14,7 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          active: boolean
+          company: string
+          created_at: string
+          currency: string
+          hourly_rate: number
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          company?: string
+          created_at?: string
+          currency?: string
+          hourly_rate?: number
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          company?: string
+          created_at?: string
+          currency?: string
+          hourly_rate?: number
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          active: boolean
+          budget: number
+          budget_type: string
+          created_at: string
+          customer_id: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          budget?: number
+          budget_type?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          budget?: number
+          budget_type?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheets: {
+        Row: {
+          billable: boolean
+          created_at: string
+          description: string
+          duration: number
+          end_time: number
+          hourly_rate: number
+          id: string
+          project_id: string
+          start_time: number
+          user_id: string
+        }
+        Insert: {
+          billable?: boolean
+          created_at?: string
+          description?: string
+          duration: number
+          end_time: number
+          hourly_rate: number
+          id?: string
+          project_id: string
+          start_time: number
+          user_id: string
+        }
+        Update: {
+          billable?: boolean
+          created_at?: string
+          description?: string
+          duration?: number
+          end_time?: number
+          hourly_rate?: number
+          id?: string
+          project_id?: string
+          start_time?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
