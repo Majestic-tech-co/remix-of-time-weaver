@@ -50,8 +50,8 @@ export function TimerBar() {
     toast.success("Timer started");
   }
 
-  function handleStop() {
-    const t = timerActions.stop();
+  async function handleStop() {
+    const t = await timerActions.stop();
     if (t) {
       toast.success(`Saved ${formatDuration(t.duration)} · ${formatMoney(t.billable ? (t.duration / 3600) * t.hourlyRate : 0, liveCustomer?.currency ?? "USD")}`);
     } else {
