@@ -7,7 +7,7 @@ import { TimesheetTable } from "@/components/timesheet-table";
 import { startOfWeek, formatDuration, formatMoney } from "@/lib/format";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Dashboard · Majestic" },

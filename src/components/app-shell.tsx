@@ -1,6 +1,9 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Clock, Users, FolderKanban, Timer } from "lucide-react";
-import type { ReactNode } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LayoutDashboard, Clock, Users, FolderKanban, Timer, LogOut } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const nav: NavItem[] = [
@@ -12,6 +15,23 @@ const nav: NavItem[] = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setEmail(session?.user.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/auth" });
+  }
+
   return (
     <div className="min-h-screen flex w-full bg-background text-foreground">
       <aside className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
@@ -31,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={item.to}
-                to={item.to as any}
+                to={item.to as never}
                 className={
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors " +
                   (active
@@ -45,8 +65,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 text-[11px] text-muted-foreground border-t border-sidebar-border">
-          Local-first · saved in browser
+        <div className="p-3 border-t border-sidebar-border space-y-2">
+          {email && (
+            <div className="text-xs text-muted-foreground truncate px-1" title={email}>
+              {email}
+            </div>
+          )}
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 h-8" onClick={handleSignOut}>
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </Button>
         </div>
       </aside>
 
@@ -57,6 +84,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Timer className="h-4 w-4" />
           </div>
           <span className="font-semibold">Majestic</span>
+          <Button variant="ghost" size="sm" className="ml-auto gap-1.5 h-8" onClick={handleSignOut}>
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </Button>
         </header>
         <nav className="md:hidden flex overflow-x-auto gap-1 px-3 py-2 border-b border-border bg-sidebar">
           {nav.map((item) => {
@@ -64,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={item.to}
-                to={item.to as any}
+                to={item.to as never}
                 className={
                   "shrink-0 rounded-md px-3 py-1.5 text-xs " +
                   (active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-muted-foreground")

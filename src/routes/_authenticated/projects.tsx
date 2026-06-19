@@ -13,7 +13,7 @@ import { formatMoney, formatHours } from "@/lib/format";
 import type { Project } from "@/lib/types";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/projects")({
+export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({ meta: [{ title: "Projects · Majestic" }] }),
   component: ProjectsPage,
 });
