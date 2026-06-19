@@ -93,9 +93,9 @@ async function loadAll() {
   if (loadInflight) return loadInflight;
   loadInflight = (async () => {
     const [cRes, pRes, tRes] = await Promise.all([
-      supabase.from("customers").select("*").order("name"),
-      supabase.from("projects").select("*").order("name"),
-      supabase.from("timesheets").select("*").order("start_time", { ascending: false }),
+      supabase.from("customers").select("*").order("name") as unknown as Promise<{ data: DbCustomer[] | null; error: { message: string } | null }>,
+      supabase.from("projects").select("*").order("name") as unknown as Promise<{ data: DbProject[] | null; error: { message: string } | null }>,
+      supabase.from("timesheets").select("*").order("start_time", { ascending: false }) as unknown as Promise<{ data: DbTimesheet[] | null; error: { message: string } | null }>,
     ]);
     if (cRes.error) toast.error(cRes.error.message);
     if (pRes.error) toast.error(pRes.error.message);
