@@ -12,6 +12,7 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({ meta: [{ title: "Sign in · Majestic" }] }),
   component: AuthPage,
+  pendingComponent: () => null,
 });
 
 function AuthPage() {
