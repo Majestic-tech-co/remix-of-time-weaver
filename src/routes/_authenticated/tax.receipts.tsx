@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, Paperclip, ExternalLink, Search } from "lucide-react";
 import { useAppState, expenseActions, customerTaxRates } from "@/lib/store";
