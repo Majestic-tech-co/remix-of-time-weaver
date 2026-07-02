@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, Search, FileDown } from "lucide-react";
-import { useAppState, timesheetActions } from "@/lib/store";
+import { useAppState, timesheetActions, expenseActions } from "@/lib/store";
 import { TimesheetTable } from "@/components/timesheet-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,7 +197,7 @@ function AddEntryDialog() {
 }
 
 function InvoiceDialog() {
-  const { customers, projects, timesheets } = useAppState();
+  const { customers, projects, timesheets, expenses, taxSettings } = useAppState();
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState("");
   const [from, setFrom] = useState(() => {
@@ -207,12 +207,13 @@ function InvoiceDialog() {
   });
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [invoiceNumber, setInvoiceNumber] = useState(`INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`);
-  const [fromName, setFromName] = useState("Your Company");
-  const [fromEmail, setFromEmail] = useState("");
-  const [fromAddress, setFromAddress] = useState("");
+  const [fromName, setFromName] = useState(taxSettings.businessName || "Your Company");
+  const [fromEmail, setFromEmail] = useState(taxSettings.businessEmail);
+  const [fromAddress, setFromAddress] = useState(taxSettings.businessAddress);
   const [dueInDays, setDueInDays] = useState(14);
   const [notes, setNotes] = useState("Thank you for your business.");
   const [includeNonBillable, setIncludeNonBillable] = useState(false);
+  const [includeExpenses, setIncludeExpenses] = useState(true);
 
   const customer = customers.find((c) => c.id === customerId);
   const fromTs = from ? new Date(from).getTime() : -Infinity;
@@ -230,19 +231,32 @@ function InvoiceDialog() {
         .sort((a, b) => a.startTime - b.startTime)
     : [];
 
-  function exportPdf() {
+  const matchingExpenses = customer && includeExpenses
+    ? expenses.filter((x) => {
+        if (x.customerId !== customer.id) return false;
+        if (!x.billableToCustomer || x.invoiced) return false;
+        const ts = new Date(x.date).getTime();
+        return ts >= fromTs && ts <= toTs;
+      })
+    : [];
+
+  async function exportPdf() {
     if (!customer) { toast.error("Choose a customer."); return; }
-    if (matchingEntries.length === 0) { toast.error("No entries in this date range."); return; }
+    if (matchingEntries.length === 0 && matchingExpenses.length === 0) { toast.error("No entries or expenses in this date range."); return; }
     const doc = generateInvoicePdf({
       customer,
       entries: matchingEntries,
+      expenses: matchingExpenses,
       projects,
+      settings: taxSettings,
       invoiceNumber,
       dueInDays,
       from: { name: fromName, email: fromEmail || undefined, address: fromAddress || undefined },
       notes: notes || undefined,
     });
     doc.save(`${invoiceNumber}-${customer.name.replace(/\s+/g, "_")}.pdf`);
+    // Mark reimbursed expenses as invoiced so they aren't double-billed
+    await Promise.all(matchingExpenses.map((x) => expenseActions.update(x.id, { invoiced: true })));
     toast.success("Invoice downloaded");
     setOpen(false);
   }
@@ -257,7 +271,7 @@ function InvoiceDialog() {
           <DialogTitle>Generate invoice PDF</DialogTitle>
           <DialogDescription>
             {customer
-              ? `${matchingEntries.length} billable ${matchingEntries.length === 1 ? "entry" : "entries"} found for ${customer.company || customer.name} in the selected range.`
+              ? `${matchingEntries.length} time ${matchingEntries.length === 1 ? "entry" : "entries"} and ${matchingExpenses.length} reimbursable ${matchingExpenses.length === 1 ? "expense" : "expenses"} for ${customer.company || customer.name}.`
               : "Pick a customer and the billing period."}
           </DialogDescription>
         </DialogHeader>
@@ -285,7 +299,11 @@ function InvoiceDialog() {
           </div>
           <div className="flex items-center gap-2">
             <Switch id="inc-nonbillable" checked={includeNonBillable} onCheckedChange={setIncludeNonBillable} />
-            <Label htmlFor="inc-nonbillable" className="text-sm">Include non-billable entries</Label>
+            <Label htmlFor="inc-nonbillable" className="text-sm">Include non-billable time</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch id="inc-expenses" checked={includeExpenses} onCheckedChange={setIncludeExpenses} />
+            <Label htmlFor="inc-expenses" className="text-sm">Include reimbursable expenses (not yet invoiced)</Label>
           </div>
           <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
             <div>
@@ -318,7 +336,7 @@ function InvoiceDialog() {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={exportPdf} disabled={!customer || matchingEntries.length === 0} className="gap-2">
+          <Button onClick={exportPdf} disabled={!customer || (matchingEntries.length === 0 && matchingExpenses.length === 0)} className="gap-2">
             <FileDown className="h-4 w-4" /> Download PDF
           </Button>
         </DialogFooter>

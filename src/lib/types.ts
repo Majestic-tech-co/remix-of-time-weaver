@@ -7,6 +7,9 @@ export interface Customer {
   currency: string;
   hourlyRate: number;
   active: boolean;
+  taxExempt: boolean;
+  gstRateOverride: number | null;
+  pstRateOverride: number | null;
 }
 
 export interface Project {
@@ -47,10 +50,55 @@ export interface RunningTimer {
   billable: boolean;
 }
 
+export interface Expense {
+  id: ID;
+  date: string; // YYYY-MM-DD
+  vendor: string;
+  category: string;
+  subtotal: number;
+  gst: number;
+  pst: number;
+  total: number;
+  currency: string;
+  customerId: ID | null;
+  projectId: ID | null;
+  notes: string;
+  receiptPath: string | null;
+  billableToCustomer: boolean;
+  invoiced: boolean;
+}
+
+export interface TaxSettings {
+  businessName: string;
+  businessEmail: string;
+  businessAddress: string;
+  gstNumber: string;
+  pstNumber: string;
+  defaultGstRate: number;
+  defaultPstRate: number;
+  chargeGst: boolean;
+  chargePst: boolean;
+}
+
+export const EXPENSE_CATEGORIES = [
+  "Meals & Entertainment (50%)",
+  "Vehicle",
+  "Office supplies",
+  "Software & Subscriptions",
+  "Travel",
+  "Professional fees",
+  "Home office",
+  "Advertising",
+  "Bank fees",
+  "Other",
+] as const;
+
 export interface AppState {
   customers: Customer[];
   projects: Project[];
-  activities: Activity[]; // legacy, kept for stored data
+  activities: Activity[]; // legacy
   timesheets: Timesheet[];
+  expenses: Expense[];
+  taxSettings: TaxSettings;
   running: RunningTimer | null;
 }

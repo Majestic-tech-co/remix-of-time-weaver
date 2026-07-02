@@ -16,6 +16,9 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTimesheetsRouteImport } from './routes/_authenticated/timesheets'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedTaxSettingsRouteImport } from './routes/_authenticated/tax.settings'
+import { Route as AuthenticatedTaxReportsRouteImport } from './routes/_authenticated/tax.reports'
+import { Route as AuthenticatedTaxReceiptsRouteImport } from './routes/_authenticated/tax.receipts'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
@@ -51,6 +54,23 @@ const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTaxSettingsRoute =
+  AuthenticatedTaxSettingsRouteImport.update({
+    id: '/tax/settings',
+    path: '/tax/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTaxReportsRoute = AuthenticatedTaxReportsRouteImport.update({
+  id: '/tax/reports',
+  path: '/tax/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTaxReceiptsRoute =
+  AuthenticatedTaxReceiptsRouteImport.update({
+    id: '/tax/receipts',
+    path: '/tax/receipts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -59,6 +79,9 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/tax/receipts': typeof AuthenticatedTaxReceiptsRoute
+  '/tax/reports': typeof AuthenticatedTaxReportsRoute
+  '/tax/settings': typeof AuthenticatedTaxSettingsRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -67,6 +90,9 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/tax/receipts': typeof AuthenticatedTaxReceiptsRoute
+  '/tax/reports': typeof AuthenticatedTaxReportsRoute
+  '/tax/settings': typeof AuthenticatedTaxSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,6 +103,9 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/tax/receipts': typeof AuthenticatedTaxReceiptsRoute
+  '/_authenticated/tax/reports': typeof AuthenticatedTaxReportsRoute
+  '/_authenticated/tax/settings': typeof AuthenticatedTaxSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,8 +116,20 @@ export interface FileRouteTypes {
     | '/customers'
     | '/projects'
     | '/timesheets'
+    | '/tax/receipts'
+    | '/tax/reports'
+    | '/tax/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/trust' | '/customers' | '/projects' | '/timesheets' | '/'
+  to:
+    | '/auth'
+    | '/trust'
+    | '/customers'
+    | '/projects'
+    | '/timesheets'
+    | '/'
+    | '/tax/receipts'
+    | '/tax/reports'
+    | '/tax/settings'
   id:
     | '__root__'
     | '/_authenticated'
@@ -98,6 +139,9 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/_authenticated/timesheets'
     | '/_authenticated/'
+    | '/_authenticated/tax/receipts'
+    | '/_authenticated/tax/reports'
+    | '/_authenticated/tax/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,6 +201,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tax/settings': {
+      id: '/_authenticated/tax/settings'
+      path: '/tax/settings'
+      fullPath: '/tax/settings'
+      preLoaderRoute: typeof AuthenticatedTaxSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tax/reports': {
+      id: '/_authenticated/tax/reports'
+      path: '/tax/reports'
+      fullPath: '/tax/reports'
+      preLoaderRoute: typeof AuthenticatedTaxReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tax/receipts': {
+      id: '/_authenticated/tax/receipts'
+      path: '/tax/receipts'
+      fullPath: '/tax/receipts'
+      preLoaderRoute: typeof AuthenticatedTaxReceiptsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -165,6 +230,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedTimesheetsRoute: typeof AuthenticatedTimesheetsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedTaxReceiptsRoute: typeof AuthenticatedTaxReceiptsRoute
+  AuthenticatedTaxReportsRoute: typeof AuthenticatedTaxReportsRoute
+  AuthenticatedTaxSettingsRoute: typeof AuthenticatedTaxSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -172,6 +240,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedTimesheetsRoute: AuthenticatedTimesheetsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedTaxReceiptsRoute: AuthenticatedTaxReceiptsRoute,
+  AuthenticatedTaxReportsRoute: AuthenticatedTaxReportsRoute,
+  AuthenticatedTaxSettingsRoute: AuthenticatedTaxSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -185,13 +256,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

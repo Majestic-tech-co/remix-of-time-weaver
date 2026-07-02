@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Clock, Users, FolderKanban, Timer, LogOut } from "lucide-react";
+import { LayoutDashboard, Clock, Users, FolderKanban, Timer, LogOut, Receipt, FileBarChart, Settings } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,11 @@ const nav: NavItem[] = [
   { to: "/timesheets", label: "Timesheets", icon: Clock },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/projects", label: "Projects", icon: FolderKanban },
+];
+const taxNav: NavItem[] = [
+  { to: "/tax/receipts", label: "Receipts", icon: Receipt },
+  { to: "/tax/reports", label: "Tax reports", icon: FileBarChart },
+  { to: "/tax/settings", label: "Tax settings", icon: Settings },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -44,9 +49,29 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="text-[11px] text-muted-foreground">Time tracking</div>
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {nav.map((item) => {
             const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/");
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to as never}
+                className={
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors " +
+                  (active
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground")
+                }
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+          <div className="pt-4 pb-1 px-3 text-[10px] uppercase tracking-wider text-muted-foreground">Tax</div>
+          {taxNav.map((item) => {
+            const active = pathname === item.to || pathname.startsWith(item.to + "/");
             const Icon = item.icon;
             return (
               <Link
@@ -89,7 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
         </header>
         <nav className="md:hidden flex overflow-x-auto gap-1 px-3 py-2 border-b border-border bg-sidebar">
-          {nav.map((item) => {
+          {[...nav, ...taxNav].map((item) => {
             const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
             return (
               <Link
