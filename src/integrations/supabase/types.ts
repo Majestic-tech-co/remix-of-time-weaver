@@ -20,9 +20,12 @@ export type Database = {
           company: string
           created_at: string
           currency: string
+          gst_rate_override: number | null
           hourly_rate: number
           id: string
           name: string
+          pst_rate_override: number | null
+          tax_exempt: boolean
           user_id: string
         }
         Insert: {
@@ -30,9 +33,12 @@ export type Database = {
           company?: string
           created_at?: string
           currency?: string
+          gst_rate_override?: number | null
           hourly_rate?: number
           id?: string
           name: string
+          pst_rate_override?: number | null
+          tax_exempt?: boolean
           user_id: string
         }
         Update: {
@@ -40,12 +46,90 @@ export type Database = {
           company?: string
           created_at?: string
           currency?: string
+          gst_rate_override?: number | null
           hourly_rate?: number
           id?: string
           name?: string
+          pst_rate_override?: number | null
+          tax_exempt?: boolean
           user_id?: string
         }
         Relationships: []
+      }
+      expenses: {
+        Row: {
+          billable_to_customer: boolean
+          category: string
+          created_at: string
+          currency: string
+          customer_id: string | null
+          expense_date: string
+          gst: number
+          id: string
+          invoiced: boolean
+          notes: string
+          project_id: string | null
+          pst: number
+          receipt_path: string | null
+          subtotal: number
+          total: number
+          user_id: string
+          vendor: string
+        }
+        Insert: {
+          billable_to_customer?: boolean
+          category?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          expense_date?: string
+          gst?: number
+          id?: string
+          invoiced?: boolean
+          notes?: string
+          project_id?: string | null
+          pst?: number
+          receipt_path?: string | null
+          subtotal?: number
+          total?: number
+          user_id: string
+          vendor?: string
+        }
+        Update: {
+          billable_to_customer?: boolean
+          category?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          expense_date?: string
+          gst?: number
+          id?: string
+          invoiced?: boolean
+          notes?: string
+          project_id?: string | null
+          pst?: number
+          receipt_path?: string | null
+          subtotal?: number
+          total?: number
+          user_id?: string
+          vendor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -87,6 +171,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tax_settings: {
+        Row: {
+          business_address: string
+          business_email: string
+          business_name: string
+          charge_gst: boolean
+          charge_pst: boolean
+          default_gst_rate: number
+          default_pst_rate: number
+          gst_number: string
+          pst_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_address?: string
+          business_email?: string
+          business_name?: string
+          charge_gst?: boolean
+          charge_pst?: boolean
+          default_gst_rate?: number
+          default_pst_rate?: number
+          gst_number?: string
+          pst_number?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_address?: string
+          business_email?: string
+          business_name?: string
+          charge_gst?: boolean
+          charge_pst?: boolean
+          default_gst_rate?: number
+          default_pst_rate?: number
+          gst_number?: string
+          pst_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       timesheets: {
         Row: {

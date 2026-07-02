@@ -93,17 +93,29 @@ function CustomerDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const [currency, setCurrency] = useState(editing?.currency ?? "USD");
   const [rate, setRate] = useState(String(editing?.hourlyRate ?? 100));
   const [active, setActive] = useState(editing?.active ?? true);
+  const [taxExempt, setTaxExempt] = useState(editing?.taxExempt ?? false);
+  const [gstOverride, setGstOverride] = useState(editing?.gstRateOverride == null ? "" : String((editing.gstRateOverride * 100).toFixed(2)));
+  const [pstOverride, setPstOverride] = useState(editing?.pstRateOverride == null ? "" : String((editing.pstRateOverride * 100).toFixed(2)));
 
   // reset when dialog reopens
   useStateReset([editing, open], () => {
     setName(editing?.name ?? ""); setCompany(editing?.company ?? "");
     setCurrency(editing?.currency ?? "USD"); setRate(String(editing?.hourlyRate ?? 100));
     setActive(editing?.active ?? true);
+    setTaxExempt(editing?.taxExempt ?? false);
+    setGstOverride(editing?.gstRateOverride == null ? "" : String((editing.gstRateOverride * 100).toFixed(2)));
+    setPstOverride(editing?.pstRateOverride == null ? "" : String((editing.pstRateOverride * 100).toFixed(2)));
   });
 
   function submit() {
     if (!name.trim()) { toast.error("Name required"); return; }
-    const data = { name: name.trim(), company: company.trim(), currency, hourlyRate: parseFloat(rate) || 0, active };
+    const data = {
+      name: name.trim(), company: company.trim(), currency,
+      hourlyRate: parseFloat(rate) || 0, active,
+      taxExempt,
+      gstRateOverride: gstOverride.trim() === "" ? null : (Number(gstOverride) || 0) / 100,
+      pstRateOverride: pstOverride.trim() === "" ? null : (Number(pstOverride) || 0) / 100,
+    };
     if (editing) customerActions.update(editing.id, data);
     else customerActions.create(data);
     onOpenChange(false);
@@ -121,6 +133,23 @@ function CustomerDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             <div><Label className="mb-1.5 block text-xs text-muted-foreground">Hourly rate</Label><Input type="number" value={rate} onChange={(e) => setRate(e.target.value)} /></div>
           </div>
           <div className="flex items-center gap-2"><Switch id="cact" checked={active} onCheckedChange={setActive} /><Label htmlFor="cact">Active</Label></div>
+          <div className="pt-3 border-t border-border space-y-3">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Tax</div>
+            <div className="flex items-center gap-2">
+              <Switch id="ctax" checked={taxExempt} onCheckedChange={setTaxExempt} />
+              <Label htmlFor="ctax" className="text-sm">Tax exempt (no GST/PST on invoices)</Label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="mb-1.5 block text-xs text-muted-foreground">GST override (%)</Label>
+                <Input type="number" step="0.1" value={gstOverride} placeholder="Use default" onChange={(e) => setGstOverride(e.target.value)} disabled={taxExempt} />
+              </div>
+              <div>
+                <Label className="mb-1.5 block text-xs text-muted-foreground">PST override (%)</Label>
+                <Input type="number" step="0.1" value={pstOverride} placeholder="Use default" onChange={(e) => setPstOverride(e.target.value)} disabled={taxExempt} />
+              </div>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>

@@ -1,12 +1,15 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { Customer, Project, Timesheet } from "./types";
+import type { Customer, Project, Timesheet, Expense, TaxSettings } from "./types";
 import { formatDate, formatHours, formatMoney } from "./format";
+import { customerTaxRates } from "./store";
 
 export interface InvoiceInput {
   customer: Customer;
   entries: Timesheet[];
+  expenses?: Expense[];
   projects: Project[];
+  settings: TaxSettings;
   invoiceNumber?: string;
   issueDate?: Date;
   dueInDays?: number;
@@ -16,20 +19,18 @@ export interface InvoiceInput {
 
 export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   const {
-    customer,
-    entries,
-    projects,
+    customer, entries, expenses = [], projects, settings,
     invoiceNumber = `INV-${Date.now().toString().slice(-6)}`,
-    issueDate = new Date(),
-    dueInDays = 14,
-    from = { name: "Your Company" },
+    issueDate = new Date(), dueInDays = 14,
+    from = { name: settings.businessName || "Your Company", email: settings.businessEmail || undefined, address: settings.businessAddress || undefined },
     notes,
   } = input;
 
   const billable = entries.filter((e) => e.billable);
-  const currency = customer.currency || "USD";
+  const currency = customer.currency || "CAD";
   const due = new Date(issueDate);
   due.setDate(due.getDate() + dueInDays);
+  const { gst: gstRate, pst: pstRate } = customerTaxRates(customer, settings);
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -50,9 +51,11 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60);
   const fromLines = [from.name, from.email, from.address].filter(Boolean) as string[];
+  if (settings.gstNumber) fromLines.push(`GST/HST #: ${settings.gstNumber}`);
+  if (settings.pstNumber) fromLines.push(`PST/RST #: ${settings.pstNumber}`);
   fromLines.forEach((l, i) => doc.text(l, pageWidth - margin, 76 + i * 14, { align: "right" }));
 
-  let y = 120;
+  let y = 140;
   doc.setTextColor(110);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -74,7 +77,7 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
   doc.text(formatDate(issueDate.getTime()), pageWidth - margin - 120, y + 16);
   doc.text(formatDate(due.getTime()), pageWidth - margin, y + 16, { align: "right" });
 
-  const rows = billable.map((e) => {
+  const timeRows = billable.map((e) => {
     const project = projects.find((p) => p.id === e.projectId);
     const hours = e.duration / 3600;
     const amount = hours * e.hourlyRate;
@@ -87,8 +90,23 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
     ];
   });
 
-  const subtotal = billable.reduce((sum, e) => sum + (e.duration / 3600) * e.hourlyRate, 0);
+  const expenseRows = expenses.map((x) => [
+    formatDate(new Date(x.date).getTime()),
+    `${x.vendor || x.category}${x.notes ? `\n${x.notes}` : ""}`,
+    "—", "—",
+    formatMoney(x.total, currency),
+  ]);
+
+  const rows = [...timeRows, ...expenseRows];
+
+  const timeSubtotal = billable.reduce((sum, e) => sum + (e.duration / 3600) * e.hourlyRate, 0);
+  const expenseSubtotal = expenses.reduce((sum, e) => sum + e.total, 0);
+  const subtotal = timeSubtotal + expenseSubtotal;
   const totalHours = billable.reduce((sum, e) => sum + e.duration / 3600, 0);
+  // Tax applied to services only; reimbursed expenses pass through
+  const gstAmount = timeSubtotal * gstRate;
+  const pstAmount = timeSubtotal * pstRate;
+  const total = subtotal + gstAmount + pstAmount;
 
   autoTable(doc, {
     startY: y + 60,
@@ -107,37 +125,64 @@ export function generateInvoicePdf(input: InvoiceInput): jsPDF {
 
   // @ts-expect-error lastAutoTable is added by autoTable plugin
   const endY: number = doc.lastAutoTable.finalY + 20;
-  const labelX = pageWidth - margin - 140;
+  const labelX = pageWidth - margin - 160;
   const valueX = pageWidth - margin;
 
+  let cursor = endY;
   doc.setFontSize(10);
   doc.setTextColor(80);
-  doc.text("Total hours", labelX, endY);
+  doc.text("Total hours", labelX, cursor);
   doc.setTextColor(0);
-  doc.text(formatHours(totalHours * 3600), valueX, endY, { align: "right" });
+  doc.text(formatHours(totalHours * 3600), valueX, cursor, { align: "right" });
+  cursor += 18;
 
   doc.setTextColor(80);
-  doc.text("Subtotal", labelX, endY + 18);
+  doc.text("Services subtotal", labelX, cursor);
   doc.setTextColor(0);
-  doc.text(formatMoney(subtotal, currency), valueX, endY + 18, { align: "right" });
+  doc.text(formatMoney(timeSubtotal, currency), valueX, cursor, { align: "right" });
+  cursor += 16;
+
+  if (expenseSubtotal > 0) {
+    doc.setTextColor(80);
+    doc.text("Reimbursable expenses", labelX, cursor);
+    doc.setTextColor(0);
+    doc.text(formatMoney(expenseSubtotal, currency), valueX, cursor, { align: "right" });
+    cursor += 16;
+  }
+
+  if (gstRate > 0) {
+    doc.setTextColor(80);
+    doc.text(`GST (${(gstRate * 100).toFixed(1)}%)`, labelX, cursor);
+    doc.setTextColor(0);
+    doc.text(formatMoney(gstAmount, currency), valueX, cursor, { align: "right" });
+    cursor += 16;
+  }
+  if (pstRate > 0) {
+    doc.setTextColor(80);
+    doc.text(`PST (${(pstRate * 100).toFixed(1)}%)`, labelX, cursor);
+    doc.setTextColor(0);
+    doc.text(formatMoney(pstAmount, currency), valueX, cursor, { align: "right" });
+    cursor += 16;
+  }
 
   doc.setDrawColor(200);
-  doc.line(labelX, endY + 28, valueX, endY + 28);
+  doc.line(labelX, cursor + 4, valueX, cursor + 4);
+  cursor += 20;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Total due", labelX, endY + 46);
-  doc.text(formatMoney(subtotal, currency), valueX, endY + 46, { align: "right" });
+  doc.text("Total due", labelX, cursor);
+  doc.text(formatMoney(total, currency), valueX, cursor, { align: "right" });
 
   if (notes) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(110);
-    doc.text("NOTES", margin, endY + 80);
+    doc.text("NOTES", margin, cursor + 40);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(60);
     const wrapped = doc.splitTextToSize(notes, pageWidth - margin * 2);
-    doc.text(wrapped, margin, endY + 96);
+    doc.text(wrapped, margin, cursor + 56);
   }
 
   const pageHeight = doc.internal.pageSize.getHeight();
