@@ -205,7 +205,7 @@ function ExpenseDialog({
   const customerProjects = projects.filter((p) => p.customerId === (customerId === "none" ? "" : customerId));
 
   // Reset when opened
-  useMemo(() => {
+  useEffect(() => {
     if (!open) return;
     if (editing) {
       setDate(editing.date);
