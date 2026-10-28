@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Clock, Users, FolderKanban, Timer, LogOut, Receipt, FileBarChart, Settings } from "lucide-react";
+import { LayoutDashboard, Clock, Users, FolderKanban, KanbanSquare, Timer, LogOut, Receipt, FileBarChart, Settings } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ const nav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/timesheets", label: "Timesheets", icon: Clock },
   { to: "/customers", label: "Customers", icon: Users },
-  { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/projects", label: "Projects", icon: FolderKanban, exact: true },
+  { to: "/projects/boards", label: "Boards", icon: KanbanSquare },
 ];
 const taxNav: NavItem[] = [
   { to: "/tax/receipts", label: "Receipts", icon: Receipt },

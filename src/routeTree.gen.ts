@@ -9,21 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TrustRouteImport } from './routes/trust'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as TrustRouteImport } from './routes/trust'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedTimesheetsRouteImport } from './routes/_authenticated/timesheets'
-import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
-import { Route as AuthenticatedTaxSettingsRouteImport } from './routes/_authenticated/tax.settings'
-import { Route as AuthenticatedTaxReportsRouteImport } from './routes/_authenticated/tax.reports'
-import { Route as AuthenticatedTaxReceiptsRouteImport } from './routes/_authenticated/tax.receipts'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedTimesheetsRouteImport } from './routes/_authenticated/timesheets'
 import { Route as AuthenticatedProjectsBoardsRouteImport } from './routes/_authenticated/projects_.boards'
+import { Route as AuthenticatedTaxReceiptsRouteImport } from './routes/_authenticated/tax.receipts'
+import { Route as AuthenticatedTaxReportsRouteImport } from './routes/_authenticated/tax.reports'
+import { Route as AuthenticatedTaxSettingsRouteImport } from './routes/_authenticated/tax.settings'
 
-const TrustRoute = TrustRouteImport.update({
-  id: '/trust',
-  path: '/trust',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -31,8 +30,9 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -40,9 +40,9 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTimesheetsRoute = AuthenticatedTimesheetsRouteImport.update({
-  id: '/timesheets',
-  path: '/timesheets',
+const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
@@ -50,15 +50,21 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
+const AuthenticatedTimesheetsRoute = AuthenticatedTimesheetsRouteImport.update({
+  id: '/timesheets',
+  path: '/timesheets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTaxSettingsRoute =
-  AuthenticatedTaxSettingsRouteImport.update({
-    id: '/tax/settings',
-    path: '/tax/settings',
+const AuthenticatedProjectsBoardsRoute =
+  AuthenticatedProjectsBoardsRouteImport.update({
+    id: '/projects_/boards',
+    path: '/projects/boards',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTaxReceiptsRoute =
+  AuthenticatedTaxReceiptsRouteImport.update({
+    id: '/tax/receipts',
+    path: '/tax/receipts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedTaxReportsRoute = AuthenticatedTaxReportsRouteImport.update({
@@ -66,16 +72,10 @@ const AuthenticatedTaxReportsRoute = AuthenticatedTaxReportsRouteImport.update({
   path: '/tax/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTaxReceiptsRoute =
-  AuthenticatedTaxReceiptsRouteImport.update({
-    id: '/tax/receipts',
-    path: '/tax/receipts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedProjectsBoardsRoute =
-  AuthenticatedProjectsBoardsRouteImport.update({
-    id: '/projects_/boards',
-    path: '/projects/boards',
+const AuthenticatedTaxSettingsRoute =
+  AuthenticatedTaxSettingsRouteImport.update({
+    id: '/tax/settings',
+    path: '/tax/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -165,11 +165,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/trust': {
-      id: '/trust'
-      path: '/trust'
-      fullPath: '/trust'
-      preLoaderRoute: typeof TrustRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -179,11 +179,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -193,11 +193,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/timesheets': {
-      id: '/_authenticated/timesheets'
-      path: '/timesheets'
-      fullPath: '/timesheets'
-      preLoaderRoute: typeof AuthenticatedTimesheetsRouteImport
+    '/_authenticated/customers': {
+      id: '/_authenticated/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/projects': {
@@ -207,25 +207,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/customers': {
-      id: '/_authenticated/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
+    '/_authenticated/timesheets': {
+      id: '/_authenticated/timesheets'
+      path: '/timesheets'
+      fullPath: '/timesheets'
+      preLoaderRoute: typeof AuthenticatedTimesheetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tax/settings': {
-      id: '/_authenticated/tax/settings'
-      path: '/tax/settings'
-      fullPath: '/tax/settings'
-      preLoaderRoute: typeof AuthenticatedTaxSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tax/reports': {
-      id: '/_authenticated/tax/reports'
-      path: '/tax/reports'
-      fullPath: '/tax/reports'
-      preLoaderRoute: typeof AuthenticatedTaxReportsRouteImport
+    '/_authenticated/projects_/boards': {
+      id: '/_authenticated/projects_/boards'
+      path: '/projects/boards'
+      fullPath: '/projects/boards'
+      preLoaderRoute: typeof AuthenticatedProjectsBoardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tax/receipts': {
@@ -235,11 +228,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTaxReceiptsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/projects_/boards': {
-      id: '/_authenticated/projects_/boards'
-      path: '/projects/boards'
-      fullPath: '/projects/boards'
-      preLoaderRoute: typeof AuthenticatedProjectsBoardsRouteImport
+    '/_authenticated/tax/reports': {
+      id: '/_authenticated/tax/reports'
+      path: '/tax/reports'
+      fullPath: '/tax/reports'
+      preLoaderRoute: typeof AuthenticatedTaxReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tax/settings': {
+      id: '/_authenticated/tax/settings'
+      path: '/tax/settings'
+      fullPath: '/tax/settings'
+      preLoaderRoute: typeof AuthenticatedTaxSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
