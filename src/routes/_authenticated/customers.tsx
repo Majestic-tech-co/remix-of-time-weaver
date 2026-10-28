@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
+import { StatusDot } from "@/components/status-dot";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/format";
 import type { Customer } from "@/lib/types";
@@ -27,24 +28,22 @@ function CustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Customers</h1>
-          <p className="text-sm text-muted-foreground mt-1">Clients you bill time against.</p>
-        </div>
-        <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Add customer</Button>
-      </div>
+      <PageHeader
+        title="Customers"
+        description="Clients you bill time against."
+        actions={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Add customer</Button>}
+      />
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="relative rounded-xl border border-border bg-card overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
+          <thead className="border-b border-border text-xs text-muted-foreground">
             <tr>
               <th className="px-4 py-2.5 text-left font-medium">Name</th>
               <th className="px-4 py-2.5 text-left font-medium">Company</th>
               <th className="px-4 py-2.5 text-right font-medium">Hourly rate</th>
               <th className="px-4 py-2.5 text-right font-medium">Projects</th>
-              <th className="px-4 py-2.5 text-center font-medium">Status</th>
-              <th className="px-4 py-2.5 text-right font-medium w-24">Actions</th>
+              <th className="px-4 py-2.5 text-left font-medium">Status</th>
+              <th className="px-4 py-2.5 w-24"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -54,20 +53,16 @@ function CustomersPage() {
             {customers.map((c) => {
               const projCount = projects.filter((p) => p.customerId === c.id).length;
               return (
-                <tr key={c.id} className="border-b border-border/60 hover:bg-accent/30">
+                <tr key={c.id} className="border-b border-border/60 last:border-0 hover:bg-accent/20 transition-colors">
                   <td className="px-4 py-3 font-medium">{c.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.company}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatMoney(c.hourlyRate, c.currency)}/h</td>
                   <td className="px-4 py-3 text-right tabular-nums">{projCount}</td>
-                  <td className="px-4 py-3 text-center">
-                    {c.active
-                      ? <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20">Active</Badge>
-                      : <Badge variant="secondary">Inactive</Badge>}
-                  </td>
+                  <td className="px-4 py-3"><StatusDot active={c.active} label={c.active ? "Active" : "Inactive"} /></td>
                   <td className="px-4 py-3 text-right">
-                    <div className="inline-flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => {
+                    <div className="inline-flex gap-0.5 text-muted-foreground">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Edit customer" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 hover:text-destructive" aria-label="Delete customer" onClick={() => {
                         if (projects.some((p) => p.customerId === c.id) || timesheets.some((t) => projects.find((p) => p.id === t.projectId)?.customerId === c.id)) {
                           toast.error("Delete projects & entries first."); return;
                         }
@@ -134,7 +129,7 @@ function CustomerDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
           </div>
           <div className="flex items-center gap-2"><Switch id="cact" checked={active} onCheckedChange={setActive} /><Label htmlFor="cact">Active</Label></div>
           <div className="pt-3 border-t border-border space-y-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Tax</div>
+            <div className="text-xs font-medium text-muted-foreground">Tax</div>
             <div className="flex items-center gap-2">
               <Switch id="ctax" checked={taxExempt} onCheckedChange={setTaxExempt} />
               <Label htmlFor="ctax" className="text-sm">Tax exempt (no GST/PST on invoices)</Label>

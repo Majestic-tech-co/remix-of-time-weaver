@@ -4,6 +4,8 @@ import { Clock, DollarSign, Briefcase } from "lucide-react";
 import { useAppState } from "@/lib/store";
 import { TimerBar } from "@/components/timer-bar";
 import { TimesheetTable } from "@/components/timesheet-table";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import { startOfWeek, formatDuration, formatMoney } from "@/lib/format";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 
@@ -50,23 +52,20 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track time, see what's billable, ship invoices.</p>
-      </div>
+      <PageHeader title="Dashboard" description="Track time, see what's billable, ship invoices." />
 
       <TimerBar />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard icon={Clock} label="Hours this week" value={formatDuration(totalSeconds)} sub={`${(totalSeconds / 3600).toFixed(2)} hours total`} />
-        <StatCard icon={DollarSign} label="Billable earnings" value={formatMoney(billableEarnings, primaryCurrency)} sub="Week to date" accent="success" />
+        <StatCard icon={DollarSign} label="Billable earnings" value={formatMoney(billableEarnings, primaryCurrency)} sub="Week to date" />
         <StatCard icon={Briefcase} label="Active projects" value={String(activeProjectsCount)} sub="Worked on this week" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Hours by project · this week</h2>
+            <h2 className="text-sm font-semibold">Hours by project · this week</h2>
             <span className="text-xs text-muted-foreground">Top 6</span>
           </div>
           {byProject.length === 0 ? (
@@ -75,14 +74,14 @@ function Dashboard() {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={byProject} margin={{ left: -10, right: 8, top: 8, bottom: 8 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "currentColor" }} stroke="currentColor" className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11, fill: "currentColor" }} stroke="currentColor" className="text-muted-foreground" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "currentColor" }} stroke="currentColor" strokeOpacity={0.25} tickLine={false} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 11, fill: "currentColor" }} axisLine={false} tickLine={false} className="text-muted-foreground" />
                   <Tooltip
-                    cursor={{ fill: "oklch(0.30 0.018 250 / 0.4)" }}
-                    contentStyle={{ background: "oklch(0.22 0.014 250)", border: "1px solid oklch(0.30 0.014 250)", borderRadius: 8, fontSize: 12 }}
+                    cursor={{ fill: "var(--accent)", fillOpacity: 0.4 }}
+                    contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                     formatter={(v: number) => [`${v}h`, "Hours"]}
                   />
-                  <Bar dataKey="hours" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={56}>
                     {byProject.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                   </Bar>
                 </BarChart>
@@ -91,7 +90,7 @@ function Dashboard() {
           )}
         </div>
         <div className="rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold mb-4">Breakdown</h2>
+          <h2 className="text-sm font-semibold mb-4">Breakdown</h2>
           <ul className="space-y-3">
             {byProject.length === 0 && <li className="text-sm text-muted-foreground">No projects tracked yet.</li>}
             {byProject.map((b, i) => {
@@ -117,28 +116,11 @@ function Dashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Recent entries · this week</h2>
+          <h2 className="text-sm font-semibold">Recent entries · this week</h2>
           <span className="text-xs text-muted-foreground">{weekEntries.length} entries</span>
         </div>
         <TimesheetTable entries={weekEntries.slice(0, 12)} empty="No entries this week yet." />
       </div>
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon, label, value, sub, accent,
-}: {
-  icon: typeof Clock; label: string; value: string; sub?: string; accent?: "success";
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-        <Icon className={"h-3.5 w-3.5 " + (accent === "success" ? "text-success" : "text-primary")} />
-        {label}
-      </div>
-      <div className={"mt-2 text-2xl md:text-3xl font-bold tabular-nums " + (accent === "success" ? "text-success" : "")}>{value}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
     </div>
   );
 }

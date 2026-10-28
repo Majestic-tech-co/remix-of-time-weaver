@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Plus, Search, FileDown } from "lucide-react";
 import { useAppState, timesheetActions, expenseActions } from "@/lib/store";
 import { TimesheetTable } from "@/components/timesheet-table";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,19 +51,14 @@ function TimesheetsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Timesheets</h1>
-          <p className="text-sm text-muted-foreground mt-1">Browse, filter, and back-log time.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <InvoiceDialog />
-          <AddEntryDialog />
-        </div>
-      </div>
+      <PageHeader
+        title="Timesheets"
+        description="Browse, filter, and back-log time."
+        actions={<><InvoiceDialog /><AddEntryDialog /></>}
+      />
 
-      <div className="rounded-xl border border-border bg-card p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
-        <div className="md:col-span-2">
+      <div className="rounded-xl border border-border bg-card p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+        <div className="sm:col-span-2">
           <Label className="text-xs text-muted-foreground mb-1.5 block">Search</Label>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -104,14 +100,16 @@ function TimesheetsPage() {
           <Label className="text-xs text-muted-foreground mb-1.5 block">From</Label>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="bg-background" />
         </div>
-        <div className="md:col-start-2">
+        <div>
           <Label className="text-xs text-muted-foreground mb-1.5 block">To</Label>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="bg-background" />
         </div>
       </div>
 
-      <div className="text-sm text-muted-foreground">{filtered.length} entries</div>
-      <TimesheetTable entries={filtered} empty="No entries match your filters." />
+      <div className="space-y-3">
+        <div className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "entry" : "entries"}</div>
+        <TimesheetTable entries={filtered} empty="No entries match your filters." />
+      </div>
     </div>
   );
 }

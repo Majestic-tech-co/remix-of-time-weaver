@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { FileDown, FileBarChart, Building2, Wallet } from "lucide-react";
 import { useAppState } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatMoney } from "@/lib/format";
@@ -82,39 +84,44 @@ function TaxReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Tax reports</h1>
-          <p className="text-sm text-muted-foreground mt-1">Year-end statements, expense summaries, and income reports.</p>
-        </div>
-        <div className="w-40">
-          <Label className="text-xs text-muted-foreground mb-1.5 block">Tax year</Label>
+      <PageHeader
+        title="Tax reports"
+        description="Year-end statements, expense summaries, and income reports."
+        actions={
           <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36" aria-label="Tax year"><span className="text-muted-foreground mr-1">Year</span><SelectValue /></SelectTrigger>
             <SelectContent>
               {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
+        }
+      />
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold">Income &amp; expenses</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard size="sm" label="Billable hours" value={summary.totalHours.toFixed(2)} />
+          <StatCard size="sm" label="Services income" value={formatMoney(summary.services, currency)} />
+          <StatCard size="sm" label="Total invoiced" value={formatMoney(summary.invoiced, currency)} />
+          <StatCard size="sm" label="Expenses (with GST ITC)" value={formatMoney(summary.expTotal, currency)} />
         </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Billable hours" value={summary.totalHours.toFixed(2)} />
-        <StatCard label="Services income" value={formatMoney(summary.services, currency)} />
-        <StatCard label="Total invoiced" value={formatMoney(summary.invoiced, currency)} highlight />
-        <StatCard label="Expenses (with GST ITC)" value={formatMoney(summary.expTotal, currency)} />
-      </div>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold">Sales tax</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard size="sm" label="GST/HST collected" value={formatMoney(summary.gst, currency)} />
+          <StatCard size="sm" label="PST collected" value={formatMoney(summary.pst, currency)} />
+          <StatCard size="sm" label="GST ITC (paid)" value={formatMoney(summary.expGstItc, currency)} />
+          <StatCard size="sm" label="Net GST owed" value={formatMoney(summary.gst - summary.expGstItc, currency)} />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="GST/HST collected" value={formatMoney(summary.gst, currency)} />
-        <StatCard label="PST collected" value={formatMoney(summary.pst, currency)} />
-        <StatCard label="GST ITC (paid)" value={formatMoney(summary.expGstItc, currency)} />
-        <StatCard label="Net GST owed" value={formatMoney(summary.gst - summary.expGstItc, currency)} />
-      </div>
-
+      <section className="space-y-3">
+      <h2 className="text-sm font-semibold">Download reports</h2>
       <div className="grid md:grid-cols-3 gap-4">
         <ReportCard
-          icon={<Building2 className="h-5 w-5" />}
+          icon={<Building2 className="h-4 w-4" />}
           title="Year-end statement — one customer"
           description="A summary of hours, invoiced income, taxes collected and reimbursed expenses for a single customer. Great to send at year-end for their records."
         >
@@ -125,40 +132,32 @@ function TaxReportsPage() {
               {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button className="w-full gap-2 mt-3" onClick={downloadCustomer} disabled={!customerId}>
+          <Button variant="secondary" className="w-full gap-2 mt-3" onClick={downloadCustomer} disabled={!customerId}>
             <FileDown className="h-4 w-4" /> Download PDF
           </Button>
         </ReportCard>
 
         <ReportCard
-          icon={<FileBarChart className="h-5 w-5" />}
+          icon={<FileBarChart className="h-4 w-4" />}
           title="Income summary — all customers"
           description="One page showing every customer's total hours and invoiced income for the year. Perfect for filing self-employed business income (T2125)."
         >
-          <Button className="w-full gap-2 mt-3" onClick={downloadAllCustomers}>
+          <Button variant="secondary" className="w-full gap-2 mt-3" onClick={downloadAllCustomers}>
             <FileDown className="h-4 w-4" /> Download PDF
           </Button>
         </ReportCard>
 
         <ReportCard
-          icon={<Wallet className="h-5 w-5" />}
+          icon={<Wallet className="h-4 w-4" />}
           title="Expense summary"
           description="All deductible expenses grouped by category with GST/HST input tax credits totalled. Attach with your return."
         >
-          <Button className="w-full gap-2 mt-3" onClick={downloadExpenses}>
+          <Button variant="secondary" className="w-full gap-2 mt-3" onClick={downloadExpenses}>
             <FileDown className="h-4 w-4" /> Download PDF
           </Button>
         </ReportCard>
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={"rounded-xl border border-border p-4 " + (highlight ? "bg-primary/10" : "bg-card")}>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold mt-1 tabular-nums">{value}</div>
+      </section>
     </div>
   );
 }
@@ -166,7 +165,10 @@ function StatCard({ label, value, highlight }: { label: string; value: string; h
 function ReportCard({ icon, title, description, children }: { icon: React.ReactNode; title: string; description: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 flex flex-col">
-      <div className="flex items-center gap-2 text-primary mb-2">{icon}<span className="text-sm font-semibold">{title}</span></div>
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</div>
+        <span className="text-sm font-semibold">{title}</span>
+      </div>
       <p className="text-sm text-muted-foreground flex-1">{description}</p>
       <div className="mt-4">{children}</div>
     </div>

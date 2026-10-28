@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
+import { StatusDot } from "@/components/status-dot";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatMoney, formatHours } from "@/lib/format";
@@ -26,16 +27,14 @@ function ProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">Work streams linked to customers, with budget tracking.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <PageHeader
+        title="Projects"
+        description="Work streams linked to customers, with budget tracking."
+        actions={<>
           <ProjectsTabs active="/projects" />
           <Button onClick={() => { setEditing(null); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Add project</Button>
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {projects.length === 0 && (
@@ -61,13 +60,22 @@ function ProjectsPage() {
             <div key={p.id} className="rounded-xl border border-border bg-card p-5 flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-xs text-muted-foreground truncate">{customer?.name ?? "—"}</div>
                   <div className="font-semibold truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground truncate mt-0.5">{customer?.name ?? "—"}</div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {p.active
-                    ? <Badge className="bg-success/15 text-success border border-success/30 hover:bg-success/20">Active</Badge>
-                    : <Badge variant="secondary">Archived</Badge>}
+                <div className="flex items-center gap-2 shrink-0">
+                  <StatusDot active={p.active} label={p.active ? "Active" : "Archived"} />
+                  <div className="flex items-center text-muted-foreground -mr-2">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Edit project" onClick={() => { setEditing(p); setOpen(true); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 hover:text-destructive" aria-label="Delete project" onClick={() => {
+                      if (entries.length > 0) { toast.error("Delete entries first."); return; }
+                      projectActions.remove(p.id);
+                    }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -82,31 +90,20 @@ function ProjectsPage() {
                   )}
                 </div>
                 {p.budgetType !== "none" && (
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
                       className={"h-full rounded-full transition-all " + (over ? "bg-destructive" : pct > 80 ? "bg-warning" : "bg-primary")}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
                 )}
-                <div className="grid grid-cols-3 gap-2 text-xs pt-1">
+                <div className="grid grid-cols-3 gap-3 pt-3 mt-1 border-t border-border/60">
                   <Stat label="Logged" value={formatHours(loggedSeconds)} />
                   <Stat label="Entries" value={String(entries.length)} />
                   <Stat label="Earnings" value={formatMoney(earnings, customer?.currency)} />
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 pt-2 border-t border-border/60 -mx-1">
-                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => { setEditing(p); setOpen(true); }}>
-                  <Pencil className="h-3.5 w-3.5" /> Edit
-                </Button>
-                <Button size="sm" variant="ghost" className="gap-1.5 text-destructive hover:text-destructive ml-auto" onClick={() => {
-                  if (entries.length > 0) { toast.error("Delete entries first."); return; }
-                  projectActions.remove(p.id);
-                }}>
-                  <Trash2 className="h-3.5 w-3.5" /> Delete
-                </Button>
-              </div>
             </div>
           );
         })}
@@ -119,9 +116,9 @@ function ProjectsPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-muted/40 px-2 py-1.5">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="font-medium tabular-nums truncate">{value}</div>
+    <div className="min-w-0">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium tabular-nums truncate mt-0.5">{value}</div>
     </div>
   );
 }

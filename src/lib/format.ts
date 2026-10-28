@@ -44,3 +44,7 @@ export function toLocalInput(ts: number): string {
 export function fromLocalInput(v: string): number {
   return new Date(v).getTime();
 }
+
+export function formatTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}

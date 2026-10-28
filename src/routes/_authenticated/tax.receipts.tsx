@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,18 +65,16 @@ function ReceiptsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Receipts</h1>
-          <p className="text-sm text-muted-foreground mt-1">Deductible business expenses with attached receipts.</p>
-        </div>
-        <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Add receipt</Button>
-      </div>
+      <PageHeader
+        title="Receipts"
+        description="Deductible business expenses with attached receipts."
+        actions={<Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Add receipt</Button>}
+      />
 
       <div className="flex flex-wrap gap-3 items-end">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search vendor, category, notes..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <Search className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-8" placeholder="Search vendor, category, notes..." value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <div className="w-40">
           <Select value={year} onValueChange={setYear}>
@@ -88,15 +88,15 @@ function ReceiptsPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Subtotal" value={formatMoney(totals.subtotal, "CAD")} />
-        <StatCard label="GST/HST paid" value={formatMoney(totals.gst, "CAD")} />
-        <StatCard label="PST paid" value={formatMoney(totals.pst, "CAD")} />
-        <StatCard label="Total" value={formatMoney(totals.total, "CAD")} highlight />
+        <StatCard size="sm" label="Subtotal" value={formatMoney(totals.subtotal, "CAD")} />
+        <StatCard size="sm" label="GST/HST paid" value={formatMoney(totals.gst, "CAD")} />
+        <StatCard size="sm" label="PST paid" value={formatMoney(totals.pst, "CAD")} />
+        <StatCard size="sm" label="Total" value={formatMoney(totals.total, "CAD")} />
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="relative rounded-xl border border-border bg-card overflow-x-auto">
+        <table className="w-full text-sm min-w-[960px]">
+          <thead className="border-b border-border text-xs text-muted-foreground">
             <tr>
               <th className="px-4 py-2.5 text-left font-medium">Date</th>
               <th className="px-4 py-2.5 text-left font-medium">Vendor</th>
@@ -106,8 +106,8 @@ function ReceiptsPage() {
               <th className="px-4 py-2.5 text-right font-medium">GST</th>
               <th className="px-4 py-2.5 text-right font-medium">PST</th>
               <th className="px-4 py-2.5 text-right font-medium">Total</th>
-              <th className="px-4 py-2.5 text-center font-medium">Status</th>
-              <th className="px-4 py-2.5 text-right font-medium w-28">Actions</th>
+              <th className="px-4 py-2.5 text-left font-medium">Status</th>
+              <th className="px-4 py-2.5 w-20"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -117,19 +117,19 @@ function ReceiptsPage() {
             {filtered.map((e) => {
               const c = customers.find((x) => x.id === e.customerId);
               return (
-                <tr key={e.id} className="border-t border-border hover:bg-muted/20">
-                  <td className="px-4 py-2.5">{formatDate(new Date(e.date).getTime())}</td>
-                  <td className="px-4 py-2.5 font-medium">{e.vendor}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{e.category}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{c ? (c.company || c.name) : "—"}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{formatMoney(e.subtotal, e.currency)}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">{formatMoney(e.gst, e.currency)}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">{formatMoney(e.pst, e.currency)}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums font-medium">{formatMoney(e.total, e.currency)}</td>
-                  <td className="px-4 py-2.5 text-center">
-                    <div className="inline-flex gap-1 items-center">
+                <tr key={e.id} className="border-b border-border/60 last:border-0 hover:bg-accent/20 transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap">{formatDate(new Date(e.date).getTime())}</td>
+                  <td className="px-4 py-3 font-medium">{e.vendor}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{e.category}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{c ? (c.company || c.name) : "—"}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{formatMoney(e.subtotal, e.currency)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{formatMoney(e.gst, e.currency)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{formatMoney(e.pst, e.currency)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums font-medium">{formatMoney(e.total, e.currency)}</td>
+                  <td className="px-4 py-3">
+                    <div className="inline-flex gap-2 items-center">
                       {e.billableToCustomer && (
-                        <Badge variant="outline" className={e.invoiced ? "border-emerald-700 text-emerald-500" : "border-amber-700 text-amber-500"}>
+                        <Badge variant="outline" className={"font-medium border-transparent " + (e.invoiced ? "bg-success/12 text-success" : "bg-warning/12 text-warning")}>
                           {e.invoiced ? "Invoiced" : "Reimbursable"}
                         </Badge>
                       )}
@@ -140,10 +140,10 @@ function ReceiptsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-right">
-                    <div className="inline-flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => { if (confirm("Delete receipt?")) await expenseActions.remove(e.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  <td className="px-4 py-3 text-right">
+                    <div className="inline-flex gap-0.5 text-muted-foreground">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Edit receipt" onClick={() => openEdit(e)}><Pencil className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" aria-label="Delete receipt" onClick={async () => { if (confirm("Delete receipt?")) await expenseActions.remove(e.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
                   </td>
                 </tr>
@@ -162,15 +162,6 @@ function ReceiptsPage() {
         defaultGst={taxSettings.defaultGstRate}
         defaultPst={taxSettings.defaultPstRate}
       />
-    </div>
-  );
-}
-
-function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={"rounded-xl border border-border p-4 " + (highlight ? "bg-primary/10" : "bg-card")}>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold mt-1 tabular-nums">{value}</div>
     </div>
   );
 }

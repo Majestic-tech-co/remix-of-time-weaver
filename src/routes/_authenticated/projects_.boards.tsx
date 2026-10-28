@@ -5,6 +5,7 @@ import { format, parseISO, isBefore, startOfToday } from "date-fns";
 import { useAppState, boardActions, type BoardCardInput } from "@/lib/store";
 import { CARD_PRIORITIES, type BoardCard, type BoardColumn, type CardPriority } from "@/lib/types";
 import { ProjectsTabs } from "@/components/projects-tabs";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,10 +25,10 @@ export const Route = createFileRoute("/_authenticated/projects_/boards")({
 const ACTIVE_BOARD_KEY = "timetracker.activeBoard.v1";
 
 const priorityStyles: Record<CardPriority, string> = {
-  Urgent: "bg-destructive/15 text-destructive border-destructive/30",
-  High: "bg-warning/15 text-warning border-warning/30",
-  Medium: "bg-chart-2/15 text-chart-2 border-chart-2/30",
-  Low: "bg-muted text-muted-foreground border-border",
+  Urgent: "bg-destructive/12 text-destructive",
+  High: "bg-warning/12 text-warning",
+  Medium: "bg-chart-2/12 text-chart-2",
+  Low: "bg-muted text-muted-foreground",
 };
 
 type NameDialog = { kind: "board" | "renameBoard" | "column" | "renameColumn"; id?: string; initial: string };
@@ -75,13 +76,11 @@ function BoardsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Boards</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kanban boards for planning project work.</p>
-        </div>
-        <ProjectsTabs active="/projects/boards" />
-      </div>
+      <PageHeader
+        title="Boards"
+        description="Kanban boards for planning project work."
+        actions={<ProjectsTabs active="/projects/boards" />}
+      />
 
       {!board ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center space-y-4">
@@ -274,12 +273,12 @@ function CardItem({
         onDragOver={onDragOver}
         onDoubleClick={onEdit}
         className={
-          "group rounded-lg border border-border bg-background/60 p-3 cursor-grab active:cursor-grabbing hover:border-muted-foreground/40 transition " +
+          "group rounded-lg border border-border bg-background/50 p-3 cursor-grab active:cursor-grabbing hover:border-muted-foreground/30 transition-colors " +
           (dragging ? "opacity-40" : "")
         }
       >
         <div className="flex items-start justify-between gap-2 mb-1.5">
-          <span className={"text-[11px] font-semibold px-1.5 py-0.5 rounded border " + priorityStyles[card.priority]}>
+          <span className={"text-[11px] font-medium px-1.5 py-0.5 rounded " + priorityStyles[card.priority]}>
             {card.priority}
           </span>
           <div className="flex items-center opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity -mr-1 -mt-1">

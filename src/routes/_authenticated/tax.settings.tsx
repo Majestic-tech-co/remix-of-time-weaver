@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Save } from "lucide-react";
 import { useAppState, taxSettingsActions } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -35,15 +36,13 @@ function TaxSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Tax settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Business info and default tax rates used on invoices and reports.
-        </p>
-      </div>
+      <PageHeader title="Tax settings" description="Business info and default tax rates used on invoices and reports." />
 
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Business</h2>
+        <div>
+          <h2 className="text-sm font-semibold">Business</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Shown in the header of invoices and reports.</p>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <Label className="mb-1.5 block text-xs text-muted-foreground">Business name</Label>
@@ -61,7 +60,10 @@ function TaxSettingsPage() {
       </section>
 
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tax registration</h2>
+        <div>
+          <h2 className="text-sm font-semibold">Tax registration</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Your CRA and provincial registration numbers.</p>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <Label className="mb-1.5 block text-xs text-muted-foreground">GST/HST number</Label>
@@ -75,7 +77,10 @@ function TaxSettingsPage() {
       </section>
 
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Default rates</h2>
+        <div>
+          <h2 className="text-sm font-semibold">Default rates</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Applied to new invoices unless a customer overrides them.</p>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="flex items-center justify-between rounded-md border border-border p-3">
             <div>
@@ -110,7 +115,7 @@ function TaxSettingsPage() {
         </div>
       </section>
 
-      <div>
+      <div className="flex justify-end">
         <Button onClick={save} disabled={saving} className="gap-2">
           <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save settings"}
         </Button>
