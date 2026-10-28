@@ -2,7 +2,6 @@ import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AppState, Customer, Project, Timesheet, RunningTimer, Expense, TaxSettings, Board, BoardColumn, BoardCard, CardPriority } from "./types";
-import { DEFAULT_COLUMNS, STARTER_BOARD } from "./board-starter";
 
 const RUNNING_KEY = "timetracker.running.v1";
 
@@ -453,6 +452,8 @@ export function customerTaxRates(customer: Customer | undefined, settings: TaxSe
 
 
 // ---------- Boards ----------
+const DEFAULT_COLUMNS = ["Backlog", "In Progress", "Done"];
+
 const byPosition = <T extends { position: number }>(a: T, b: T) => a.position - b.position;
 
 export type BoardCardInput = Pick<BoardCard, "title" | "description" | "priority" | "dueDate">;
@@ -475,22 +476,6 @@ export const boardActions = {
     const board = mapBoard(data);
     const columns = await insertColumns(board.id, columnTitles);
     setState({ ...state, boards: [...state.boards, board], boardColumns: [...state.boardColumns, ...(columns ?? [])] });
-    return board;
-  },
-  async importStarter(): Promise<Board | null> {
-    const board = await boardActions.create(STARTER_BOARD.name, STARTER_BOARD.columns.map((c) => c.title));
-    if (!board) return null;
-    const columns = state.boardColumns.filter((c) => c.boardId === board.id).sort(byPosition);
-    const rows = STARTER_BOARD.columns.flatMap((col, ci) =>
-      col.cards.map((card, i) => ({
-        column_id: columns[ci].id, title: card.title, description: card.description,
-        priority: card.priority, position: i,
-      })),
-    );
-    if (rows.length === 0) return board;
-    const { data, error } = await supabase.from("board_cards").insert(rows).select();
-    if (error || !data) { toast.error(error?.message ?? "Failed to import cards"); return board; }
-    setState({ ...state, boardCards: [...state.boardCards, ...data.map(mapBoardCard)] });
     return board;
   },
   async rename(id: string, name: string) {

@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
-import { Plus, Pencil, Trash2, Search, MoreHorizontal, CalendarDays, Download, KanbanSquare } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MoreHorizontal, CalendarDays, KanbanSquare } from "lucide-react";
 import { format, parseISO, isBefore, startOfToday } from "date-fns";
 import { useAppState, boardActions, type BoardCardInput } from "@/lib/store";
-import { STARTER_BOARD } from "@/lib/board-starter";
 import { CARD_PRIORITIES, type BoardCard, type BoardColumn, type CardPriority } from "@/lib/types";
 import { ProjectsTabs } from "@/components/projects-tabs";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,6 @@ function BoardsPage() {
   const [query, setQuery] = useState("");
   const [nameDialog, setNameDialog] = useState<NameDialog | null>(null);
   const [cardDialog, setCardDialog] = useState<CardDialog | null>(null);
-  const [importing, setImporting] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
@@ -66,13 +64,6 @@ function BoardsPage() {
   const matches = (c: BoardCard) =>
     !q || c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q);
 
-  async function importStarter() {
-    setImporting(true);
-    const b = await boardActions.importStarter();
-    setImporting(false);
-    if (b) { selectBoard(b.id); toast.success(`Imported "${b.name}"`); }
-  }
-
   function handleDrop(e: DragEvent) {
     e.preventDefault();
     const id = dragId ?? e.dataTransfer.getData("text/plain");
@@ -81,8 +72,6 @@ function BoardsPage() {
     setDropTarget(null);
     if (id && target) void boardActions.moveCard(id, target.columnId, target.beforeCardId);
   }
-
-  const hasStarter = boards.some((b) => b.name === STARTER_BOARD.name);
 
   return (
     <div className="space-y-6">
@@ -97,13 +86,10 @@ function BoardsPage() {
       {!board ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center space-y-4">
           <KanbanSquare className="h-8 w-8 mx-auto text-muted-foreground" />
-          <div className="text-sm text-muted-foreground">No boards yet. Create one, or import the MCSC starter backlog.</div>
+          <div className="text-sm text-muted-foreground">No boards yet. Create one to start planning.</div>
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <Button className="gap-2" onClick={() => setNameDialog({ kind: "board", initial: "" })}>
               <Plus className="h-4 w-4" /> New board
-            </Button>
-            <Button variant="secondary" className="gap-2" disabled={importing} onClick={importStarter}>
-              <Download className="h-4 w-4" /> {importing ? "Importing…" : "Import MCSC backlog"}
             </Button>
           </div>
         </div>
@@ -125,11 +111,6 @@ function BoardsPage() {
                 <DropdownMenuItem onClick={() => setNameDialog({ kind: "renameBoard", id: board.id, initial: board.name })}>
                   <Pencil className="h-4 w-4" /> Rename board
                 </DropdownMenuItem>
-                {!hasStarter && (
-                  <DropdownMenuItem disabled={importing} onClick={importStarter}>
-                    <Download className="h-4 w-4" /> Import MCSC backlog
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
