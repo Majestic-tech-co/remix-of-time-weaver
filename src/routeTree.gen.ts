@@ -19,6 +19,7 @@ import { Route as AuthenticatedCustomersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTaxSettingsRouteImport } from './routes/_authenticated/tax.settings'
 import { Route as AuthenticatedTaxReportsRouteImport } from './routes/_authenticated/tax.reports'
 import { Route as AuthenticatedTaxReceiptsRouteImport } from './routes/_authenticated/tax.receipts'
+import { Route as AuthenticatedProjectsBoardsRouteImport } from './routes/_authenticated/projects_.boards'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
@@ -71,6 +72,12 @@ const AuthenticatedTaxReceiptsRoute =
     path: '/tax/receipts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProjectsBoardsRoute =
+  AuthenticatedProjectsBoardsRouteImport.update({
+    id: '/projects_/boards',
+    path: '/projects/boards',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/projects/boards': typeof AuthenticatedProjectsBoardsRoute
   '/tax/receipts': typeof AuthenticatedTaxReceiptsRoute
   '/tax/reports': typeof AuthenticatedTaxReportsRoute
   '/tax/settings': typeof AuthenticatedTaxSettingsRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/projects/boards': typeof AuthenticatedProjectsBoardsRoute
   '/tax/receipts': typeof AuthenticatedTaxReceiptsRoute
   '/tax/reports': typeof AuthenticatedTaxReportsRoute
   '/tax/settings': typeof AuthenticatedTaxSettingsRoute
@@ -103,6 +112,7 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/projects_/boards': typeof AuthenticatedProjectsBoardsRoute
   '/_authenticated/tax/receipts': typeof AuthenticatedTaxReceiptsRoute
   '/_authenticated/tax/reports': typeof AuthenticatedTaxReportsRoute
   '/_authenticated/tax/settings': typeof AuthenticatedTaxSettingsRoute
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/projects'
     | '/timesheets'
+    | '/projects/boards'
     | '/tax/receipts'
     | '/tax/reports'
     | '/tax/settings'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/timesheets'
     | '/'
+    | '/projects/boards'
     | '/tax/receipts'
     | '/tax/reports'
     | '/tax/settings'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/_authenticated/timesheets'
     | '/_authenticated/'
+    | '/_authenticated/projects_/boards'
     | '/_authenticated/tax/receipts'
     | '/_authenticated/tax/reports'
     | '/_authenticated/tax/settings'
@@ -222,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTaxReceiptsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects_/boards': {
+      id: '/_authenticated/projects_/boards'
+      path: '/projects/boards'
+      fullPath: '/projects/boards'
+      preLoaderRoute: typeof AuthenticatedProjectsBoardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -230,6 +250,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedTimesheetsRoute: typeof AuthenticatedTimesheetsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedProjectsBoardsRoute: typeof AuthenticatedProjectsBoardsRoute
   AuthenticatedTaxReceiptsRoute: typeof AuthenticatedTaxReceiptsRoute
   AuthenticatedTaxReportsRoute: typeof AuthenticatedTaxReportsRoute
   AuthenticatedTaxSettingsRoute: typeof AuthenticatedTaxSettingsRoute
@@ -240,6 +261,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedTimesheetsRoute: AuthenticatedTimesheetsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedProjectsBoardsRoute: AuthenticatedProjectsBoardsRoute,
   AuthenticatedTaxReceiptsRoute: AuthenticatedTaxReceiptsRoute,
   AuthenticatedTaxReportsRoute: AuthenticatedTaxReportsRoute,
   AuthenticatedTaxSettingsRoute: AuthenticatedTaxSettingsRoute,

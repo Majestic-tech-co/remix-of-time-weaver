@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatMoney, formatHours } from "@/lib/format";
 import type { Project } from "@/lib/types";
+import { ProjectsTabs } from "@/components/projects-tabs";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/projects")({
@@ -30,7 +31,10 @@ function ProjectsPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Projects</h1>
           <p className="text-sm text-muted-foreground mt-1">Work streams linked to customers, with budget tracking.</p>
         </div>
-        <Button onClick={() => { setEditing(null); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Add project</Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ProjectsTabs active="/projects" />
+          <Button onClick={() => { setEditing(null); setOpen(true); }} className="gap-2"><Plus className="h-4 w-4" /> Add project</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { AppState, Customer, Project, Timesheet, RunningTimer, Expense, TaxSettings } from "./types";
+import type { AppState, Customer, Project, Timesheet, RunningTimer, Expense, TaxSettings, Board, BoardColumn, BoardCard, CardPriority } from "./types";
+import { DEFAULT_COLUMNS, STARTER_BOARD } from "./board-starter";
 
 const RUNNING_KEY = "timetracker.running.v1";
 
@@ -24,6 +25,9 @@ const emptyState: AppState = {
   timesheets: [],
   expenses: [],
   taxSettings: defaultTaxSettings,
+  boards: [],
+  boardColumns: [],
+  boardCards: [],
   running: null,
 };
 
@@ -78,6 +82,13 @@ type DbTaxSettings = {
   charge_gst: boolean; charge_pst: boolean;
 };
 
+type DbBoard = { id: string; name: string; position: number };
+type DbBoardColumn = { id: string; board_id: string; title: string; position: number };
+type DbBoardCard = {
+  id: string; column_id: string; title: string; description: string;
+  priority: string; due_date: string | null; position: number;
+};
+
 const num = (v: number | string) => (typeof v === "string" ? parseFloat(v) : v);
 const numN = (v: number | string | null | undefined) => v === null || v === undefined ? null : num(v);
 
@@ -111,6 +122,15 @@ const mapTaxSettings = (r: DbTaxSettings): TaxSettings => ({
   chargeGst: r.charge_gst, chargePst: r.charge_pst,
 });
 
+const mapBoard = (r: DbBoard): Board => ({ id: r.id, name: r.name, position: r.position });
+const mapBoardColumn = (r: DbBoardColumn): BoardColumn => ({
+  id: r.id, boardId: r.board_id, title: r.title, position: r.position,
+});
+const mapBoardCard = (r: DbBoardCard): BoardCard => ({
+  id: r.id, columnId: r.column_id, title: r.title, description: r.description,
+  priority: r.priority as CardPriority, dueDate: r.due_date, position: r.position,
+});
+
 // ---------- running timer (local) ----------
 function loadRunning(): RunningTimer | null {
   if (typeof window === "undefined") return null;
@@ -136,17 +156,21 @@ async function loadAll() {
   }
   if (loadInflight) return loadInflight;
   loadInflight = (async () => {
-    const [cRes, pRes, tRes, eRes, sRes] = await Promise.all([
+    const [cRes, pRes, tRes, eRes, sRes, bRes, bcRes, bkRes] = await Promise.all([
       supabase.from("customers").select("*").order("name") as unknown as Promise<{ data: DbCustomer[] | null; error: { message: string } | null }>,
       supabase.from("projects").select("*").order("name") as unknown as Promise<{ data: DbProject[] | null; error: { message: string } | null }>,
       supabase.from("timesheets").select("*").order("start_time", { ascending: false }) as unknown as Promise<{ data: DbTimesheet[] | null; error: { message: string } | null }>,
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }) as unknown as Promise<{ data: DbExpense[] | null; error: { message: string } | null }>,
       supabase.from("tax_settings").select("*").eq("user_id", currentUserId!).maybeSingle() as unknown as Promise<{ data: DbTaxSettings | null; error: { message: string } | null }>,
+      supabase.from("boards").select("*").order("position").order("created_at"),
+      supabase.from("board_columns").select("*").order("position").order("created_at"),
+      supabase.from("board_cards").select("*").order("position").order("created_at"),
     ]);
     if (cRes.error) toast.error(cRes.error.message);
     if (pRes.error) toast.error(pRes.error.message);
     if (tRes.error) toast.error(tRes.error.message);
     if (eRes.error) toast.error(eRes.error.message);
+    if (bRes.error) toast.error(bRes.error.message);
     setState({
       customers: (cRes.data ?? []).map(mapCustomer),
       projects: (pRes.data ?? []).map(mapProject),
@@ -154,6 +178,9 @@ async function loadAll() {
       timesheets: (tRes.data ?? []).map(mapTimesheet),
       expenses: (eRes.data ?? []).map(mapExpense),
       taxSettings: sRes.data ? mapTaxSettings(sRes.data) : defaultTaxSettings,
+      boards: (bRes.data ?? []).map(mapBoard),
+      boardColumns: (bcRes.data ?? []).map(mapBoardColumn),
+      boardCards: (bkRes.data ?? []).map(mapBoardCard),
       running: loadRunning(),
     });
   })();
@@ -424,3 +451,140 @@ export function customerTaxRates(customer: Customer | undefined, settings: TaxSe
   return { gst, pst };
 }
 
+
+// ---------- Boards ----------
+const byPosition = <T extends { position: number }>(a: T, b: T) => a.position - b.position;
+
+export type BoardCardInput = Pick<BoardCard, "title" | "description" | "priority" | "dueDate">;
+
+async function insertColumns(boardId: string, titles: string[], startAt = 0): Promise<BoardColumn[] | null> {
+  if (titles.length === 0) return [];
+  const { data, error } = await supabase.from("board_columns")
+    .insert(titles.map((title, i) => ({ board_id: boardId, title, position: startAt + i })))
+    .select();
+  if (error || !data) { toast.error(error?.message ?? "Failed"); return null; }
+  return data.map(mapBoardColumn).sort(byPosition);
+}
+
+export const boardActions = {
+  async create(name: string, columnTitles: string[] = DEFAULT_COLUMNS): Promise<Board | null> {
+    const uid = requireUser(); if (!uid) return null;
+    const position = state.boards.reduce((m, b) => Math.max(m, b.position + 1), 0);
+    const { data, error } = await supabase.from("boards").insert({ user_id: uid, name, position }).select().single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return null; }
+    const board = mapBoard(data);
+    const columns = await insertColumns(board.id, columnTitles);
+    setState({ ...state, boards: [...state.boards, board], boardColumns: [...state.boardColumns, ...(columns ?? [])] });
+    return board;
+  },
+  async importStarter(): Promise<Board | null> {
+    const board = await boardActions.create(STARTER_BOARD.name, STARTER_BOARD.columns.map((c) => c.title));
+    if (!board) return null;
+    const columns = state.boardColumns.filter((c) => c.boardId === board.id).sort(byPosition);
+    const rows = STARTER_BOARD.columns.flatMap((col, ci) =>
+      col.cards.map((card, i) => ({
+        column_id: columns[ci].id, title: card.title, description: card.description,
+        priority: card.priority, position: i,
+      })),
+    );
+    if (rows.length === 0) return board;
+    const { data, error } = await supabase.from("board_cards").insert(rows).select();
+    if (error || !data) { toast.error(error?.message ?? "Failed to import cards"); return board; }
+    setState({ ...state, boardCards: [...state.boardCards, ...data.map(mapBoardCard)] });
+    return board;
+  },
+  async rename(id: string, name: string) {
+    const { data, error } = await supabase.from("boards").update({ name }).eq("id", id).select().single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setState({ ...state, boards: state.boards.map((b) => b.id === id ? mapBoard(data) : b) });
+  },
+  async remove(id: string) {
+    const { error } = await supabase.from("boards").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    const columnIds = new Set(state.boardColumns.filter((c) => c.boardId === id).map((c) => c.id));
+    setState({
+      ...state,
+      boards: state.boards.filter((b) => b.id !== id),
+      boardColumns: state.boardColumns.filter((c) => !columnIds.has(c.id)),
+      boardCards: state.boardCards.filter((c) => !columnIds.has(c.columnId)),
+    });
+  },
+  async addColumn(boardId: string, title: string) {
+    const position = state.boardColumns
+      .filter((c) => c.boardId === boardId)
+      .reduce((m, c) => Math.max(m, c.position + 1), 0);
+    const columns = await insertColumns(boardId, [title], position);
+    if (columns) setState({ ...state, boardColumns: [...state.boardColumns, ...columns] });
+  },
+  async renameColumn(id: string, title: string) {
+    const { data, error } = await supabase.from("board_columns").update({ title }).eq("id", id).select().single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setState({ ...state, boardColumns: state.boardColumns.map((c) => c.id === id ? mapBoardColumn(data) : c) });
+  },
+  async removeColumn(id: string) {
+    const { error } = await supabase.from("board_columns").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setState({
+      ...state,
+      boardColumns: state.boardColumns.filter((c) => c.id !== id),
+      boardCards: state.boardCards.filter((c) => c.columnId !== id),
+    });
+  },
+  async addCard(columnId: string, input: BoardCardInput) {
+    const position = state.boardCards
+      .filter((c) => c.columnId === columnId)
+      .reduce((m, c) => Math.max(m, c.position + 1), 0);
+    const { data, error } = await supabase.from("board_cards").insert({
+      column_id: columnId, title: input.title, description: input.description,
+      priority: input.priority, due_date: input.dueDate, position,
+    }).select().single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setState({ ...state, boardCards: [...state.boardCards, mapBoardCard(data)] });
+  },
+  async updateCard(id: string, input: BoardCardInput) {
+    const { data, error } = await supabase.from("board_cards").update({
+      title: input.title, description: input.description,
+      priority: input.priority, due_date: input.dueDate,
+    }).eq("id", id).select().single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setState({ ...state, boardCards: state.boardCards.map((c) => c.id === id ? mapBoardCard(data) : c) });
+  },
+  async removeCard(id: string) {
+    const { error } = await supabase.from("board_cards").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setState({ ...state, boardCards: state.boardCards.filter((c) => c.id !== id) });
+  },
+  // Moves a card into `toColumnId`, before `beforeCardId` (or to the end when null),
+  // renumbering positions in the affected columns. Updates optimistically.
+  async moveCard(cardId: string, toColumnId: string, beforeCardId: string | null) {
+    const card = state.boardCards.find((c) => c.id === cardId);
+    if (!card || cardId === beforeCardId) return;
+    const target = state.boardCards
+      .filter((c) => c.columnId === toColumnId && c.id !== cardId)
+      .sort(byPosition);
+    const at = beforeCardId ? target.findIndex((c) => c.id === beforeCardId) : -1;
+    target.splice(at === -1 ? target.length : at, 0, { ...card, columnId: toColumnId });
+    const lists = [target];
+    if (card.columnId !== toColumnId) {
+      lists.push(state.boardCards.filter((c) => c.columnId === card.columnId && c.id !== cardId).sort(byPosition));
+    }
+    const next = new Map<string, BoardCard>();
+    for (const list of lists) {
+      list.forEach((c, i) => next.set(c.id, { ...c, position: i }));
+    }
+    const changed = [...next.values()].filter((c) => {
+      const prev = state.boardCards.find((p) => p.id === c.id);
+      return !prev || prev.position !== c.position || prev.columnId !== c.columnId;
+    });
+    if (changed.length === 0) return;
+    setState({ ...state, boardCards: state.boardCards.map((c) => next.get(c.id) ?? c) });
+    const results = await Promise.all(changed.map((c) =>
+      supabase.from("board_cards").update({ column_id: c.columnId, position: c.position }).eq("id", c.id),
+    ));
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      toast.error(failed.error.message);
+      await loadAll();
+    }
+  },
+};

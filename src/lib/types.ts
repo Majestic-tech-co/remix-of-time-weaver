@@ -93,6 +93,32 @@ export const EXPENSE_CATEGORIES = [
   "Other",
 ] as const;
 
+export const CARD_PRIORITIES = ["Urgent", "High", "Medium", "Low"] as const;
+export type CardPriority = (typeof CARD_PRIORITIES)[number];
+
+export interface Board {
+  id: ID;
+  name: string;
+  position: number;
+}
+
+export interface BoardColumn {
+  id: ID;
+  boardId: ID;
+  title: string;
+  position: number;
+}
+
+export interface BoardCard {
+  id: ID;
+  columnId: ID;
+  title: string;
+  description: string;
+  priority: CardPriority;
+  dueDate: string | null; // YYYY-MM-DD
+  position: number;
+}
+
 export interface AppState {
   customers: Customer[];
   projects: Project[];
@@ -100,5 +126,8 @@ export interface AppState {
   timesheets: Timesheet[];
   expenses: Expense[];
   taxSettings: TaxSettings;
+  boards: Board[];
+  boardColumns: BoardColumn[];
+  boardCards: BoardCard[];
   running: RunningTimer | null;
 }
