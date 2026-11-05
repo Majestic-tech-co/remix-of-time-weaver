@@ -1,3 +1,5 @@
+-- Boards (kanban) tables. Originally applied through Lovable Cloud on 2026-10-27.
+
 CREATE TABLE public.boards (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
