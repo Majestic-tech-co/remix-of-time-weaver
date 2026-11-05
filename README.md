@@ -27,7 +27,7 @@ The publishable key is safe to expose; row-level security keeps each user's data
 
 ## Deploying
 
-Pushing to `main` deploys on Vercel. If you change the Supabase project, update the same variables in the Vercel project settings, and add the site's domain to the Supabase Auth **Site URL** and **Redirect URLs** so sign-up emails link back to the app.
+Pushing to `main` deploys on Vercel. Security headers (CSP, frame and content-type protection) are set as Nitro route rules in `vite.config.ts`, so they apply on Vercel and in local production builds alike. If you change the Supabase project, update the same variables in the Vercel project settings, and add the site's domain to the Supabase Auth **Site URL** and **Redirect URLs** so sign-up emails link back to the app.
 
 ## Database
 

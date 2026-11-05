@@ -40,7 +40,7 @@ function AuthPage() {
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 6) { toast.error("Password must be at least 6 characters."); return; }
+    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email, password,
@@ -95,8 +95,8 @@ function AuthPage() {
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs text-muted-foreground">Password</Label>
-                <Input type="password" autoComplete="new-password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-                <p className="mt-1 text-xs text-muted-foreground">At least 6 characters.</p>
+                <Input type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <p className="mt-1 text-xs text-muted-foreground">At least 8 characters.</p>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating..." : "Create account"}</Button>
             </form>

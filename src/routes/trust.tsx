@@ -13,7 +13,7 @@ export const Route = createFileRoute("/trust")({
 
 function TrustPage() {
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-3xl mx-auto px-4 py-10 md:py-16">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Trust & Privacy</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -24,18 +24,19 @@ function TrustPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Local-first data storage</CardTitle>
-          <CardDescription>Your time entries stay on your device.</CardDescription>
+          <CardTitle>Where your data is stored</CardTitle>
+          <CardDescription>Your account and records are stored in a hosted database.</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            Majestic is a local-first time tracker. Customers, projects, timesheet entries, and the
-            active timer are stored in your browser's local storage. No account is required and no
-            timesheet data is sent to a Majestic-operated server.
+            Majestic requires an account (email and password). Your customers, projects, time
+            entries, boards, receipts, and tax settings are stored in a Supabase database, and
+            receipt files you upload are kept in private Supabase file storage.
           </p>
           <p>
-            Clearing your browser storage or using a different browser/device will remove or hide
-            your data, since it is not synced.
+            Each record is tied to your account, and database access rules only let you read or
+            change your own records. Receipt files can only be opened through short-lived links
+            created for your signed-in account.
           </p>
         </CardContent>
       </Card>
@@ -46,13 +47,17 @@ function TrustPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            The app itself does not collect personal information, analytics, or telemetry. Invoices
-            you generate as PDFs are produced entirely in your browser and downloaded directly to
-            your device.
+            We store what you enter into the app: your email address, the customers, projects, and
+            time you track, receipts and expense details, and business details such as your GST/PST
+            registration numbers. We don't use analytics, advertising, or tracking scripts.
           </p>
           <p>
-            The hosting platform may collect standard request metadata (such as IP address and user
-            agent) needed to serve the page.
+            Invoices and tax reports are generated as PDFs in your browser and downloaded directly to
+            your device; they are not uploaded anywhere.
+          </p>
+          <p>
+            Your browser keeps your sign-in session and the currently running timer in local storage
+            on your device. No other cookies or trackers are set.
           </p>
         </CardContent>
       </Card>
@@ -62,10 +67,11 @@ function TrustPage() {
           <CardTitle>Subprocessors & integrations</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>
-            Majestic loads web fonts from Google Fonts to render the interface. No third-party
-            analytics, advertising, or tracking scripts are bundled with the app.
-          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><span className="text-foreground">Supabase</span> (provisioned through Lovable Cloud) — database, sign-in, and receipt file storage.</li>
+            <li><span className="text-foreground">Vercel</span> — hosts and serves the app; it receives standard request data such as IP address and browser type.</li>
+            <li><span className="text-foreground">Google Fonts</span> — serves the app's fonts, so your browser contacts Google when pages load.</li>
+          </ul>
         </CardContent>
       </Card>
 
@@ -75,8 +81,12 @@ function TrustPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            Because data lives in your browser, you can remove it at any time by clearing site data
-            for this domain in your browser settings.
+            You can delete customers, projects, time entries, boards, and receipts at any time from
+            within the app; deleting a receipt also deletes its uploaded file.
+          </p>
+          <p>
+            To delete your account and everything stored with it, contact the app owner using the
+            details below.
           </p>
         </CardContent>
       </Card>

@@ -76,15 +76,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "majestic time track — Local-first time tracking" },
-      { name: "description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
+      { title: "Majestic — Time tracking" },
+      { name: "description", content: "Track time, invoice customers, and keep receipts and tax reports in one place." },
       { name: "author", content: "Majestic" },
-      { property: "og:title", content: "majestic time track — Local-first time tracking" },
-      { property: "og:description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
+      { property: "og:title", content: "Majestic — Time tracking" },
+      { property: "og:description", content: "Track time, invoice customers, and keep receipts and tax reports in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "majestic time track — Local-first time tracking" },
-      { name: "twitter:description", content: "Track time across customers, projects, and activities. Local-first time tracker inspired by Kimai." },
+      { name: "twitter:title", content: "Majestic — Time tracking" },
+      { name: "twitter:description", content: "Track time, invoice customers, and keep receipts and tax reports in one place." },
     ],
     links: [
       {
