@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useEffect, useState } from "react";
 import { Timer } from "lucide-react";
 import { toast } from "sonner";
@@ -57,13 +58,14 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-background px-4">
+      <ThemeToggle className="absolute top-4 right-4 h-8 w-8" />
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground mx-auto">
             <Timer className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Majestic</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Majestic</h1>
           <p className="text-sm text-muted-foreground">Sign in to track your time</p>
         </div>
 

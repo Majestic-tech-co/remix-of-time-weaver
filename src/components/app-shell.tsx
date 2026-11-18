@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const nav: NavItem[] = [
@@ -97,6 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="min-w-0 flex-1 text-xs text-muted-foreground truncate" title={email ?? undefined}>
               {email}
             </div>
+            <ThemeToggle className="shrink-0" />
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground" onClick={handleSignOut} aria-label="Sign out" title="Sign out">
               <LogOut className="h-3.5 w-3.5" />
             </Button>
@@ -109,7 +111,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="md:hidden h-14 border-b border-border flex items-center px-4 gap-2.5 bg-sidebar">
           <BrandMark size="sm" />
           <span className="text-sm font-semibold tracking-tight">Majestic</span>
-          <Button variant="ghost" size="sm" className="ml-auto gap-1.5 h-8 text-muted-foreground" onClick={handleSignOut}>
+          <ThemeToggle className="ml-auto h-8 w-8" />
+          <Button variant="ghost" size="sm" className="gap-1.5 h-8 text-muted-foreground" onClick={handleSignOut}>
             <LogOut className="h-3.5 w-3.5" /> Sign out
           </Button>
         </header>

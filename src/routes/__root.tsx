@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 
 import { Toaster } from "@/components/ui/sonner";
+import { themeInitScript, useTheme } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -101,14 +102,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <HeadContent />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
         />
       </head>
       <body>
@@ -125,7 +127,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <Toaster theme="dark" position="bottom-right" richColors />
+      <ThemedToaster />
     </QueryClientProvider>
   );
+}
+
+function ThemedToaster() {
+  const { resolved } = useTheme();
+  return <Toaster theme={resolved} position="bottom-right" richColors />;
 }

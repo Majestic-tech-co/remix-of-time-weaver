@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/trust")({
   head: () => ({
@@ -13,7 +14,8 @@ export const Route = createFileRoute("/trust")({
 
 function TrustPage() {
   return (
-    <div className="space-y-6 max-w-3xl mx-auto px-4 py-10 md:py-16">
+    <div className="relative space-y-6 max-w-3xl mx-auto px-4 py-10 md:py-16">
+      <ThemeToggle className="absolute top-4 right-4 h-8 w-8" />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Trust & Privacy</h1>
         <p className="text-sm text-muted-foreground mt-1">

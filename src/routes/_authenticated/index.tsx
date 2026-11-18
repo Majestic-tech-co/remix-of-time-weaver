@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
-const CHART_COLORS = ["oklch(0.78 0.16 75)", "oklch(0.70 0.16 195)", "oklch(0.70 0.16 155)", "oklch(0.70 0.18 320)", "oklch(0.72 0.17 30)"];
+const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 function Dashboard() {
   const { timesheets, projects, customers } = useAppState();
