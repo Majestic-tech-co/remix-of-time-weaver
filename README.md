@@ -31,13 +31,15 @@ Pushing to `main` deploys on Vercel. Security headers (CSP, frame and content-ty
 
 ## Database
 
-Schema changes live in `supabase/migrations` as plain SQL, applied in filename order. To apply new ones with the [Supabase CLI](https://supabase.com/docs/guides/cli):
+Schema changes live in `supabase/migrations` as plain SQL, applied in filename order.
+
+**New, empty project:** paste `supabase/setup.sql` (all migrations combined, in one transaction) into the Supabase SQL Editor and run it. Regenerate it after adding a migration. If you later switch to the CLI for that project, first mark the existing migrations as applied with `supabase migration repair --status applied <version>` for each file.
+
+**With the CLI:** apply new ones with the [Supabase CLI](https://supabase.com/docs/guides/cli):
 
 ```bash
 supabase link --project-ref <project-id>
 supabase db push
 ```
-
-On the original Lovable Cloud database, the Boards migration (`20261027150400_boards.sql`) was applied outside the CLI. Mark it as applied once before your first `db push` there: `supabase migration repair --status applied 20261027150400`.
 
 Tables: `customers`, `projects`, `timesheets`, `expenses`, `tax_settings`, `boards`, `board_columns`, `board_cards`, plus a private `receipts` storage bucket. After a schema change, regenerate `src/integrations/supabase/types.ts` with `supabase gen types typescript --linked`.
