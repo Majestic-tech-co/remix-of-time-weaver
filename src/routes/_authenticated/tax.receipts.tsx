@@ -13,7 +13,7 @@ import { StatCard } from "@/components/stat-card";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatMoney, formatDate } from "@/lib/format";
+import { formatMoney, formatDate, formatTotals, addToTotals, type CurrencyTotals } from "@/lib/format";
 import { EXPENSE_CATEGORIES, type Expense } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -49,10 +49,14 @@ function ReceiptsPage() {
   }, [expenses, query, year]);
 
   const totals = useMemo(() => {
-    return filtered.reduce(
-      (acc, e) => ({ subtotal: acc.subtotal + e.subtotal, gst: acc.gst + e.gst, pst: acc.pst + e.pst, total: acc.total + e.total }),
-      { subtotal: 0, gst: 0, pst: 0, total: 0 },
-    );
+    const t = { subtotal: {} as CurrencyTotals, gst: {} as CurrencyTotals, pst: {} as CurrencyTotals, total: {} as CurrencyTotals };
+    for (const e of filtered) {
+      addToTotals(t.subtotal, e.currency, e.subtotal);
+      addToTotals(t.gst, e.currency, e.gst);
+      addToTotals(t.pst, e.currency, e.pst);
+      addToTotals(t.total, e.currency, e.total);
+    }
+    return t;
   }, [filtered]);
 
   async function viewReceipt(path: string) {
@@ -88,10 +92,10 @@ function ReceiptsPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard size="sm" label="Subtotal" value={formatMoney(totals.subtotal, "CAD")} />
-        <StatCard size="sm" label="GST/HST paid" value={formatMoney(totals.gst, "CAD")} />
-        <StatCard size="sm" label="PST paid" value={formatMoney(totals.pst, "CAD")} />
-        <StatCard size="sm" label="Total" value={formatMoney(totals.total, "CAD")} />
+        <StatCard size="sm" label="Subtotal" value={formatTotals(totals.subtotal)} />
+        <StatCard size="sm" label="GST/HST paid" value={formatTotals(totals.gst)} />
+        <StatCard size="sm" label="PST paid" value={formatTotals(totals.pst)} />
+        <StatCard size="sm" label="Total" value={formatTotals(totals.total)} />
       </div>
 
       <div className="relative rounded-xl border border-border bg-card overflow-x-auto">

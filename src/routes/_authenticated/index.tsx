@@ -6,7 +6,7 @@ import { TimerBar } from "@/components/timer-bar";
 import { TimesheetTable } from "@/components/timesheet-table";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
-import { startOfWeek, formatDuration, formatMoney } from "@/lib/format";
+import { startOfWeek, formatDuration, formatTotals, addToTotals, type CurrencyTotals } from "@/lib/format";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -30,10 +30,12 @@ function Dashboard() {
   );
 
   const totalSeconds = weekEntries.reduce((sum, t) => sum + t.duration, 0);
-  const billableEarnings = weekEntries.reduce(
-    (sum, t) => (t.billable ? sum + (t.duration / 3600) * t.hourlyRate : sum),
-    0,
-  );
+  const billableEarnings = weekEntries.reduce<CurrencyTotals>((totals, t) => {
+    if (!t.billable) return totals;
+    const customerId = projects.find((p) => p.id === t.projectId)?.customerId;
+    const currency = customers.find((c) => c.id === customerId)?.currency ?? "CAD";
+    return addToTotals(totals, currency, (t.duration / 3600) * t.hourlyRate);
+  }, {});
   const activeProjectsCount = new Set(weekEntries.map((t) => t.projectId)).size;
 
   const byProject = useMemo(() => {
@@ -48,7 +50,6 @@ function Dashboard() {
       .slice(0, 6);
   }, [weekEntries, projects]);
 
-  const primaryCurrency = customers[0]?.currency ?? "USD";
 
   return (
     <div className="space-y-6">
@@ -58,7 +59,7 @@ function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard icon={Clock} label="Hours this week" value={formatDuration(totalSeconds)} sub={`${(totalSeconds / 3600).toFixed(2)} hours total`} />
-        <StatCard icon={DollarSign} label="Billable earnings" value={formatMoney(billableEarnings, primaryCurrency)} sub="Week to date" />
+        <StatCard icon={DollarSign} label="Billable earnings" value={formatTotals(billableEarnings, customers[0]?.currency)} sub="Week to date" />
         <StatCard icon={Briefcase} label="Active projects" value={String(activeProjectsCount)} sub="Worked on this week" />
       </div>
 

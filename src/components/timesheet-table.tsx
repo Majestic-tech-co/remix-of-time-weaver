@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, Undo2 } from "lucide-react";
 import { useAppState, timesheetActions } from "@/lib/store";
 import { formatDuration, formatMoney, formatDate, formatTime, toLocalInput, fromLocalInput } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -69,9 +69,20 @@ export function TimesheetRow({ entry }: { entry: Timesheet }) {
         {entry.billable
           ? formatMoney(earnings, customer?.currency)
           : <span className="text-xs text-muted-foreground">Non-billable</span>}
+        {entry.invoiced && (
+          <div className="text-[11px] text-success" title={entry.invoiceNumber ? `On invoice ${entry.invoiceNumber}` : "Invoiced"}>
+            Invoiced{entry.invoiceNumber ? ` · ${entry.invoiceNumber}` : ""}
+          </div>
+        )}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="inline-flex gap-0.5 text-muted-foreground">
+          {entry.invoiced && (
+            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Mark as not invoiced" title="Mark as not invoiced"
+              onClick={() => { if (confirm(`Mark this entry as not invoiced? It will be included the next time you invoice ${customer?.name ?? "this customer"}.`)) void timesheetActions.setInvoiced([entry.id], null); }}>
+              <Undo2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button size="icon" variant="ghost" onClick={() => setEditing(true)} className="h-7 w-7" aria-label="Edit entry"><Pencil className="h-3.5 w-3.5" /></Button>
           <Button size="icon" variant="ghost" onClick={() => timesheetActions.remove(entry.id)} className="h-7 w-7 hover:text-destructive" aria-label="Delete entry"><Trash2 className="h-3.5 w-3.5" /></Button>
         </div>
@@ -99,7 +110,7 @@ export function TimesheetTable({ entries, empty }: { entries: Timesheet[]; empty
               <th className="px-4 py-2.5 text-left font-medium">Date</th>
               <th className="px-4 py-2.5 text-right font-medium">Duration</th>
               <th className="px-4 py-2.5 text-right font-medium">Earnings</th>
-              <th className="px-4 py-2.5 w-20"><span className="sr-only">Actions</span></th>
+              <th className="px-4 py-2.5 w-24"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>

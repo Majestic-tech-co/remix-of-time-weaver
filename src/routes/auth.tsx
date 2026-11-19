@@ -22,6 +22,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,6 +39,17 @@ function AuthPage() {
     if (error) { toast.error(error.message); return; }
     toast.success("Welcome back");
     navigate({ to: "/" });
+  }
+
+  async function handleResetRequest(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    setResetSent(true);
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -76,17 +89,44 @@ function AuthPage() {
           </TabsList>
 
           <TabsContent value="signin">
-            <form onSubmit={handleSignIn} className="space-y-4 rounded-xl border border-border bg-card p-5">
-              <div>
-                <Label className="mb-1.5 block text-xs text-muted-foreground">Email</Label>
-                <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div>
-                <Label className="mb-1.5 block text-xs text-muted-foreground">Password</Label>
-                <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</Button>
-            </form>
+            {resetMode ? (
+              <form onSubmit={handleResetRequest} className="space-y-4 rounded-xl border border-border bg-card p-5">
+                {resetSent ? (
+                  <p className="text-sm text-muted-foreground">
+                    If an account exists for <span className="text-foreground font-medium">{email}</span>, we've sent a link to reset your password. Check your inbox.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">Enter your email and we'll send you a link to choose a new password.</p>
+                    <div>
+                      <Label className="mb-1.5 block text-xs text-muted-foreground">Email</Label>
+                      <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending..." : "Send reset link"}</Button>
+                  </>
+                )}
+                <button type="button" onClick={() => { setResetMode(false); setResetSent(false); }} className="block w-full text-center text-xs text-muted-foreground hover:text-foreground">
+                  Back to sign in
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignIn} className="space-y-4 rounded-xl border border-border bg-card p-5">
+                <div>
+                  <Label className="mb-1.5 block text-xs text-muted-foreground">Email</Label>
+                  <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground">Password</Label>
+                    <button type="button" onClick={() => setResetMode(true)} className="text-xs text-muted-foreground hover:text-foreground">
+                      Forgot password?
+                    </button>
+                  </div>
+                  <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</Button>
+              </form>
+            )}
           </TabsContent>
 
           <TabsContent value="signup">

@@ -40,6 +40,8 @@ export interface Timesheet {
   duration: number;
   hourlyRate: number;
   billable: boolean;
+  invoiced: boolean;
+  invoiceNumber: string | null;
 }
 
 export interface RunningTimer {
@@ -66,6 +68,7 @@ export interface Expense {
   receiptPath: string | null;
   billableToCustomer: boolean;
   invoiced: boolean;
+  invoiceNumber: string | null;
 }
 
 export interface TaxSettings {

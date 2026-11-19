@@ -40,6 +40,8 @@ function TimesheetsPage() {
         if (projectFilter !== "all" && t.projectId !== projectFilter) return false;
         if (billableFilter === "billable" && !t.billable) return false;
         if (billableFilter === "non" && t.billable) return false;
+        if (billableFilter === "unbilled" && (!t.billable || t.invoiced)) return false;
+        if (billableFilter === "invoiced" && !t.invoiced) return false;
         if (from && t.startTime < new Date(from).getTime()) return false;
         if (to && t.startTime > new Date(to).getTime() + 86400000) return false;
         return true;
@@ -86,13 +88,15 @@ function TimesheetsPage() {
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground mb-1.5 block">Billable</Label>
+          <Label className="text-xs text-muted-foreground mb-1.5 block">Status</Label>
           <Select value={billableFilter} onValueChange={setBillableFilter}>
             <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="billable">Billable only</SelectItem>
               <SelectItem value="non">Non-billable</SelectItem>
+              <SelectItem value="unbilled">Not yet invoiced</SelectItem>
+              <SelectItem value="invoiced">Invoiced</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -212,12 +216,13 @@ function InvoiceDialog() {
   const [notes, setNotes] = useState("Thank you for your business.");
   const [includeNonBillable, setIncludeNonBillable] = useState(false);
   const [includeExpenses, setIncludeExpenses] = useState(true);
+  const [includeInvoiced, setIncludeInvoiced] = useState(false);
 
   const customer = customers.find((c) => c.id === customerId);
   const fromTs = from ? new Date(from).getTime() : -Infinity;
   const toTs = to ? new Date(to).getTime() + 86_400_000 : Infinity;
 
-  const matchingEntries = customer
+  const entriesInRange = customer
     ? timesheets
         .filter((e) => {
           const p = projects.find((pr) => pr.id === e.projectId);
@@ -228,6 +233,9 @@ function InvoiceDialog() {
         })
         .sort((a, b) => a.startTime - b.startTime)
     : [];
+  // Entries already on an invoice are left out unless explicitly re-billed.
+  const matchingEntries = includeInvoiced ? entriesInRange : entriesInRange.filter((e) => !e.invoiced);
+  const skippedInvoiced = entriesInRange.length - matchingEntries.length;
 
   const matchingExpenses = customer && includeExpenses
     ? expenses.filter((x) => {
@@ -253,9 +261,10 @@ function InvoiceDialog() {
       notes: notes || undefined,
     });
     doc.save(`${invoiceNumber}-${customer.name.replace(/\s+/g, "_")}.pdf`);
-    // Mark reimbursed expenses as invoiced so they aren't double-billed
-    await Promise.all(matchingExpenses.map((x) => expenseActions.update(x.id, { invoiced: true })));
-    toast.success("Invoice downloaded");
+    // Record what was billed so the same time and expenses aren't invoiced twice.
+    const marked = await timesheetActions.setInvoiced(matchingEntries.map((e) => e.id), invoiceNumber);
+    await Promise.all(matchingExpenses.map((x) => expenseActions.update(x.id, { invoiced: true, invoiceNumber })));
+    if (marked) toast.success(`Invoice downloaded; ${matchingEntries.length} ${matchingEntries.length === 1 ? "entry" : "entries"} marked as invoiced`);
     setOpen(false);
   }
 
@@ -269,7 +278,8 @@ function InvoiceDialog() {
           <DialogTitle>Generate invoice PDF</DialogTitle>
           <DialogDescription>
             {customer
-              ? `${matchingEntries.length} time ${matchingEntries.length === 1 ? "entry" : "entries"} and ${matchingExpenses.length} reimbursable ${matchingExpenses.length === 1 ? "expense" : "expenses"} for ${customer.company || customer.name}.`
+              ? `${matchingEntries.length} time ${matchingEntries.length === 1 ? "entry" : "entries"} and ${matchingExpenses.length} reimbursable ${matchingExpenses.length === 1 ? "expense" : "expenses"} for ${customer.company || customer.name}.` +
+                (skippedInvoiced > 0 && !includeInvoiced ? ` ${skippedInvoiced} already-invoiced ${skippedInvoiced === 1 ? "entry is" : "entries are"} left out.` : "")
               : "Pick a customer and the billing period."}
           </DialogDescription>
         </DialogHeader>
@@ -298,6 +308,10 @@ function InvoiceDialog() {
           <div className="flex items-center gap-2">
             <Switch id="inc-nonbillable" checked={includeNonBillable} onCheckedChange={setIncludeNonBillable} />
             <Label htmlFor="inc-nonbillable" className="text-sm">Include non-billable time</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch id="inc-invoiced" checked={includeInvoiced} onCheckedChange={setIncludeInvoiced} />
+            <Label htmlFor="inc-invoiced" className="text-sm">Include time that's already been invoiced</Label>
           </div>
           <div className="flex items-center gap-2">
             <Switch id="inc-expenses" checked={includeExpenses} onCheckedChange={setIncludeExpenses} />

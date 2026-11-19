@@ -121,7 +121,7 @@ export function generateYearEndCustomerReport(input: YearEndCustomerInput): jsPD
     autoTable(doc, {
       startY: y + 8,
       head: [["Date", "Vendor", "Category", "Total"]],
-      body: custExpenses.map((e) => [formatDate(new Date(e.date).getTime()), e.vendor, e.category, formatMoney(e.total, currency)]),
+      body: custExpenses.map((e) => [formatDate(new Date(e.date).getTime()), e.vendor, e.category, formatMoney(e.total, e.currency)]),
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [30, 30, 35] },
       columnStyles: { 3: { halign: "right" } },
@@ -137,11 +137,10 @@ export interface AnnualExpenseInput {
   year: number;
   expenses: Expense[];
   settings: TaxSettings;
-  currency?: string;
 }
 
 export function generateAnnualExpenseReport(input: AnnualExpenseInput): jsPDF {
-  const { year, expenses, settings, currency = "CAD" } = input;
+  const { year, expenses, settings } = input;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 40;
 
@@ -156,30 +155,34 @@ export function generateAnnualExpenseReport(input: AnnualExpenseInput): jsPDF {
 
   header(doc, `${year} Expense Summary`, "Deductible business expenses (for T2125 / bookkeeping)", settings);
 
-  const byCat = new Map<string, { subtotal: number; gst: number; pst: number; total: number; count: number }>();
+  // Grouped by category and currency so CAD and foreign amounts are never summed together.
+  type Sums = { subtotal: number; gst: number; pst: number; total: number; count: number };
+  const empty = (): Sums => ({ subtotal: 0, gst: 0, pst: 0, total: 0, count: 0 });
+  const add = (into: Sums, e: Expense) => {
+    into.subtotal += e.subtotal; into.gst += e.gst; into.pst += e.pst; into.total += e.total; into.count += 1;
+  };
+  const byCat = new Map<string, { category: string; currency: string; sums: Sums }>();
+  const byCurrency = new Map<string, Sums>();
   for (const e of yearExp) {
-    const c = byCat.get(e.category) ?? { subtotal: 0, gst: 0, pst: 0, total: 0, count: 0 };
-    c.subtotal += e.subtotal; c.gst += e.gst; c.pst += e.pst; c.total += e.total; c.count += 1;
-    byCat.set(e.category, c);
+    const key = `${e.category}|${e.currency}`;
+    const c = byCat.get(key) ?? { category: e.category, currency: e.currency, sums: empty() };
+    add(c.sums, e);
+    byCat.set(key, c);
+    const t = byCurrency.get(e.currency) ?? empty();
+    add(t, e);
+    byCurrency.set(e.currency, t);
   }
-  const catRows = Array.from(byCat.entries()).map(([cat, v]) => [
-    cat,
-    String(v.count),
-    formatMoney(v.subtotal, currency),
-    formatMoney(v.gst, currency),
-    formatMoney(v.pst, currency),
-    formatMoney(v.total, currency),
+  const moneyCells = (v: Sums, cur: string) => [formatMoney(v.subtotal, cur), formatMoney(v.gst, cur), formatMoney(v.pst, cur), formatMoney(v.total, cur)];
+  const catRows = Array.from(byCat.values()).map(({ category, currency, sums }) => [category, String(sums.count), ...moneyCells(sums, currency)]);
+  const footRows = Array.from(byCurrency.entries()).map(([cur, sums]) => [
+    byCurrency.size > 1 ? `Total (${cur})` : "Total", String(sums.count), ...moneyCells(sums, cur),
   ]);
-  const totals = yearExp.reduce(
-    (acc, e) => ({ subtotal: acc.subtotal + e.subtotal, gst: acc.gst + e.gst, pst: acc.pst + e.pst, total: acc.total + e.total }),
-    { subtotal: 0, gst: 0, pst: 0, total: 0 },
-  );
 
   autoTable(doc, {
     startY: 140,
     head: [["Category", "#", "Subtotal", "GST (ITC)", "PST", "Total"]],
     body: catRows,
-    foot: [["Total", String(yearExp.length), formatMoney(totals.subtotal, currency), formatMoney(totals.gst, currency), formatMoney(totals.pst, currency), formatMoney(totals.total, currency)]],
+    foot: footRows.length ? footRows : [["Total", "0", ...moneyCells(empty(), "CAD")]],
     styles: { fontSize: 9, cellPadding: 5 },
     headStyles: { fillColor: [30, 30, 35] },
     footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
@@ -200,10 +203,10 @@ export function generateAnnualExpenseReport(input: AnnualExpenseInput): jsPDF {
       formatDate(new Date(e.date).getTime()),
       e.vendor,
       e.category,
-      formatMoney(e.subtotal, currency),
-      formatMoney(e.gst, currency),
-      formatMoney(e.pst, currency),
-      formatMoney(e.total, currency),
+      formatMoney(e.subtotal, e.currency),
+      formatMoney(e.gst, e.currency),
+      formatMoney(e.pst, e.currency),
+      formatMoney(e.total, e.currency),
     ]),
     styles: { fontSize: 8, cellPadding: 4 },
     headStyles: { fillColor: [30, 30, 35] },
@@ -247,7 +250,9 @@ export function generateAllCustomersReport(input: AllCustomersReportInput): jsPD
     return { c, hours, services, gst, pst, reimb, total: services + gst + pst + reimb };
   });
 
-  const currency = customers[0]?.currency || "CAD";
+  // Each customer is billed in their own currency; totals are kept per currency.
+  const currencies = Array.from(new Set(rows.map((r) => r.c.currency)));
+  const sum = (rs: typeof rows, k: "hours" | "services" | "gst" | "pst" | "reimb" | "total") => rs.reduce((s, r) => s + r[k], 0);
 
   autoTable(doc, {
     startY: 140,
@@ -255,20 +260,23 @@ export function generateAllCustomersReport(input: AllCustomersReportInput): jsPD
     body: rows.map((r) => [
       r.c.company || r.c.name,
       r.hours.toFixed(2),
-      formatMoney(r.services, currency),
-      formatMoney(r.gst, currency),
-      formatMoney(r.pst, currency),
-      formatMoney(r.reimb, currency),
-      formatMoney(r.total, currency),
+      formatMoney(r.services, r.c.currency),
+      formatMoney(r.gst, r.c.currency),
+      formatMoney(r.pst, r.c.currency),
+      formatMoney(r.reimb, r.c.currency),
+      formatMoney(r.total, r.c.currency),
     ]),
-    foot: [[
-      "Total", rows.reduce((s, r) => s + r.hours, 0).toFixed(2),
-      formatMoney(rows.reduce((s, r) => s + r.services, 0), currency),
-      formatMoney(rows.reduce((s, r) => s + r.gst, 0), currency),
-      formatMoney(rows.reduce((s, r) => s + r.pst, 0), currency),
-      formatMoney(rows.reduce((s, r) => s + r.reimb, 0), currency),
-      formatMoney(rows.reduce((s, r) => s + r.total, 0), currency),
-    ]],
+    foot: currencies.map((cur) => {
+      const rs = rows.filter((r) => r.c.currency === cur);
+      return [
+        currencies.length > 1 ? `Total (${cur})` : "Total", sum(rs, "hours").toFixed(2),
+        formatMoney(sum(rs, "services"), cur),
+        formatMoney(sum(rs, "gst"), cur),
+        formatMoney(sum(rs, "pst"), cur),
+        formatMoney(sum(rs, "reimb"), cur),
+        formatMoney(sum(rs, "total"), cur),
+      ];
+    }),
     styles: { fontSize: 9, cellPadding: 5 },
     headStyles: { fillColor: [30, 30, 35] },
     footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },

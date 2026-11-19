@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { fetchAll } from "./fetch-all";
 import type { AppState, Customer, Project, Timesheet, RunningTimer, Expense, TaxSettings, Board, BoardColumn, BoardCard, CardPriority } from "./types";
 
 const RUNNING_KEY = "timetracker.running.v1";
@@ -67,12 +68,14 @@ type DbTimesheet = {
   id: string; project_id: string; description: string;
   start_time: number | string; end_time: number | string; duration: number;
   hourly_rate: number | string; billable: boolean;
+  invoiced?: boolean; invoice_number?: string | null;
 };
 type DbExpense = {
   id: string; expense_date: string; vendor: string; category: string;
   subtotal: number | string; gst: number | string; pst: number | string; total: number | string;
   currency: string; customer_id: string | null; project_id: string | null;
   notes: string; receipt_path: string | null; billable_to_customer: boolean; invoiced: boolean;
+  invoice_number?: string | null;
 };
 type DbTaxSettings = {
   business_name: string; business_email: string; business_address: string;
@@ -106,6 +109,7 @@ const mapTimesheet = (r: DbTimesheet): Timesheet => ({
   id: r.id, projectId: r.project_id, description: r.description,
   startTime: Number(r.start_time), endTime: Number(r.end_time),
   duration: r.duration, hourlyRate: num(r.hourly_rate), billable: r.billable,
+  invoiced: r.invoiced ?? false, invoiceNumber: r.invoice_number ?? null,
 });
 const mapExpense = (r: DbExpense): Expense => ({
   id: r.id, date: r.expense_date, vendor: r.vendor, category: r.category,
@@ -113,6 +117,7 @@ const mapExpense = (r: DbExpense): Expense => ({
   currency: r.currency, customerId: r.customer_id, projectId: r.project_id,
   notes: r.notes, receiptPath: r.receipt_path,
   billableToCustomer: r.billable_to_customer, invoiced: r.invoiced,
+  invoiceNumber: r.invoice_number ?? null,
 });
 const mapTaxSettings = (r: DbTaxSettings): TaxSettings => ({
   businessName: r.business_name, businessEmail: r.business_email, businessAddress: r.business_address,
@@ -156,14 +161,14 @@ async function loadAll() {
   if (loadInflight) return loadInflight;
   loadInflight = (async () => {
     const [cRes, pRes, tRes, eRes, sRes, bRes, bcRes, bkRes] = await Promise.all([
-      supabase.from("customers").select("*").order("name") as unknown as Promise<{ data: DbCustomer[] | null; error: { message: string } | null }>,
-      supabase.from("projects").select("*").order("name") as unknown as Promise<{ data: DbProject[] | null; error: { message: string } | null }>,
-      supabase.from("timesheets").select("*").order("start_time", { ascending: false }) as unknown as Promise<{ data: DbTimesheet[] | null; error: { message: string } | null }>,
-      supabase.from("expenses").select("*").order("expense_date", { ascending: false }) as unknown as Promise<{ data: DbExpense[] | null; error: { message: string } | null }>,
+      fetchAll<DbCustomer>("customers", [["name"]]),
+      fetchAll<DbProject>("projects", [["name"]]),
+      fetchAll<DbTimesheet>("timesheets", [["start_time", false]]),
+      fetchAll<DbExpense>("expenses", [["expense_date", false]]),
       supabase.from("tax_settings").select("*").eq("user_id", currentUserId!).maybeSingle() as unknown as Promise<{ data: DbTaxSettings | null; error: { message: string } | null }>,
-      supabase.from("boards").select("*").order("position").order("created_at"),
-      supabase.from("board_columns").select("*").order("position").order("created_at"),
-      supabase.from("board_cards").select("*").order("position").order("created_at"),
+      fetchAll<DbBoard>("boards", [["position"], ["created_at"]]),
+      fetchAll<DbBoardColumn>("board_columns", [["position"], ["created_at"]]),
+      fetchAll<DbBoardCard>("board_cards", [["position"], ["created_at"]]),
     ]);
     if (cRes.error) toast.error(cRes.error.message);
     if (pRes.error) toast.error(pRes.error.message);
@@ -283,7 +288,7 @@ export const projectActions = {
 
 // ---------- Timesheets ----------
 export const timesheetActions = {
-  async create(input: Omit<Timesheet, "id">) {
+  async create(input: Omit<Timesheet, "id" | "invoiced" | "invoiceNumber">) {
     const uid = requireUser(); if (!uid) return;
     const { data, error } = await supabase.from("timesheets").insert({
       user_id: uid, project_id: input.projectId, description: input.description,
@@ -310,6 +315,17 @@ export const timesheetActions = {
     const { data, error } = await supabase.from("timesheets").update(db as never).eq("id", id).select().single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
     setState({ ...state, timesheets: state.timesheets.map((t) => t.id === id ? mapTimesheet(data as DbTimesheet) : t) });
+  },
+  // Marks entries as billed on an invoice (or clears it with null) in one request.
+  async setInvoiced(ids: string[], invoiceNumber: string | null) {
+    if (ids.length === 0) return true;
+    const { data, error } = await supabase.from("timesheets")
+      .update({ invoiced: invoiceNumber !== null, invoice_number: invoiceNumber })
+      .in("id", ids).select();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return false; }
+    const updated = new Map(data.map((r) => [r.id, mapTimesheet(r as DbTimesheet)]));
+    setState({ ...state, timesheets: state.timesheets.map((t) => updated.get(t.id) ?? t) });
+    return true;
   },
   async remove(id: string) {
     const { error } = await supabase.from("timesheets").delete().eq("id", id);
@@ -367,7 +383,7 @@ export const timerActions = {
 
 // ---------- Expenses ----------
 export const expenseActions = {
-  async create(input: Omit<Expense, "id">) {
+  async create(input: Omit<Expense, "id" | "invoiceNumber">) {
     const uid = requireUser(); if (!uid) return null;
     const { data, error } = await supabase.from("expenses").insert({
       user_id: uid, expense_date: input.date, vendor: input.vendor, category: input.category,
@@ -397,6 +413,7 @@ export const expenseActions = {
     if (patch.receiptPath !== undefined) db.receipt_path = patch.receiptPath;
     if (patch.billableToCustomer !== undefined) db.billable_to_customer = patch.billableToCustomer;
     if (patch.invoiced !== undefined) db.invoiced = patch.invoiced;
+    if (patch.invoiceNumber !== undefined) db.invoice_number = patch.invoiceNumber;
     const { data, error } = await supabase.from("expenses").update(db as never).eq("id", id).select().single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
     setState({ ...state, expenses: state.expenses.map((e) => e.id === id ? mapExpense(data as DbExpense) : e) });

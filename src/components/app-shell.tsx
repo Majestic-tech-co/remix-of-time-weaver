@@ -1,10 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Clock, Users, FolderKanban, KanbanSquare, Timer, LogOut, Receipt, FileBarChart, Settings } from "lucide-react";
+import { LayoutDashboard, Clock, Users, FolderKanban, KanbanSquare, Timer, LogOut, Receipt, FileBarChart, Settings, Download, ShieldCheck, ChevronsUpDown } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportAllData } from "@/lib/export";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const nav: NavItem[] = [
@@ -51,6 +54,50 @@ function BrandMark({ size = "md" }: { size?: "md" | "sm" }) {
   );
 }
 
+function Avatar({ email }: { email: string | null }) {
+  return (
+    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sidebar-accent text-xs font-medium uppercase text-sidebar-accent-foreground">
+      {email?.[0] ?? "?"}
+    </div>
+  );
+}
+
+async function handleExport() {
+  const id = toast.loading("Preparing your export…");
+  try {
+    const { receiptsMissing } = await exportAllData((message) => toast.loading(message, { id }));
+    toast.success(receiptsMissing ? `Export downloaded (${receiptsMissing} receipt file(s) couldn't be fetched)` : "Export downloaded", { id });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Export failed", { id });
+  }
+}
+
+function AccountMenu({ email, onSignOut, compact = false }: { email: string | null; onSignOut: () => void; compact?: boolean }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {compact ? (
+          <button className="rounded-full" aria-label="Account menu"><Avatar email={email} /></button>
+        ) : (
+          <button className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1 py-1 text-left hover:bg-sidebar-accent/50 transition-colors" aria-label="Account menu">
+            <Avatar email={email} />
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground" title={email ?? undefined}>{email}</span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          </button>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={compact ? "end" : "start"} side={compact ? "bottom" : "top"} className="w-56">
+        <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">{email}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4" /> Export my data</DropdownMenuItem>
+        <DropdownMenuItem asChild><Link to="/trust"><ShieldCheck className="h-4 w-4" /> Privacy &amp; data</Link></DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onSignOut}><LogOut className="h-4 w-4" /> Sign out</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
@@ -91,17 +138,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
         <div className="p-3 border-t border-sidebar-border">
-          <div className="flex items-center gap-2.5 px-1">
-            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sidebar-accent text-xs font-medium uppercase">
-              {email?.[0] ?? "?"}
-            </div>
-            <div className="min-w-0 flex-1 text-xs text-muted-foreground truncate" title={email ?? undefined}>
-              {email}
-            </div>
+          <div className="flex items-center gap-1">
+            <AccountMenu email={email} onSignOut={handleSignOut} />
             <ThemeToggle className="shrink-0" />
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground" onClick={handleSignOut} aria-label="Sign out" title="Sign out">
-              <LogOut className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
       </aside>
@@ -112,9 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <BrandMark size="sm" />
           <span className="text-sm font-semibold tracking-tight">Majestic</span>
           <ThemeToggle className="ml-auto h-8 w-8" />
-          <Button variant="ghost" size="sm" className="gap-1.5 h-8 text-muted-foreground" onClick={handleSignOut}>
-            <LogOut className="h-3.5 w-3.5" /> Sign out
-          </Button>
+          <AccountMenu email={email} onSignOut={handleSignOut} compact />
         </header>
         <nav className="md:hidden flex overflow-x-auto gap-1 px-3 py-2 border-b border-border bg-sidebar">
           {[...nav, ...taxNav].map((item) => (

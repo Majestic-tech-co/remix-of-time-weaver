@@ -10,9 +10,9 @@ export function formatHours(seconds: number): string {
   return (seconds / 3600).toFixed(2) + "h";
 }
 
-export function formatMoney(amount: number, currency = "USD"): string {
+export function formatMoney(amount: number, currency = "USD", display: "symbol" | "code" = "symbol"): string {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
+    return new Intl.NumberFormat(undefined, { style: "currency", currency, currencyDisplay: display, maximumFractionDigits: 2 }).format(amount);
   } catch {
     return `$${amount.toFixed(2)}`;
   }
@@ -47,4 +47,19 @@ export function fromLocalInput(v: string): number {
 
 export function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+// Amounts keyed by currency code, so totals never add CAD and USD together.
+export type CurrencyTotals = Record<string, number>;
+
+export function addToTotals(totals: CurrencyTotals, currency: string, amount: number): CurrencyTotals {
+  totals[currency] = (totals[currency] ?? 0) + amount;
+  return totals;
+}
+
+export function formatTotals(totals: CurrencyTotals, fallbackCurrency = "CAD"): string {
+  const entries = Object.entries(totals).filter(([, v]) => v !== 0).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return formatMoney(0, fallbackCurrency);
+  // With several currencies, show codes (CAD/USD) so a bare "$" is never ambiguous.
+  return entries.map(([c, v]) => formatMoney(v, c, entries.length > 1 ? "code" : "symbol")).join(" · ");
 }

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatMoney } from "@/lib/format";
+import { formatTotals, addToTotals, type CurrencyTotals } from "@/lib/format";
 import {
   generateYearEndCustomerReport,
   generateAnnualExpenseReport,
@@ -40,27 +40,32 @@ function TaxReportsPage() {
     const start = new Date(year, 0, 1).getTime();
     const end = new Date(year + 1, 0, 1).getTime();
     const yearEntries = timesheets.filter((t) => t.startTime >= start && t.startTime < end && t.billable);
-    const services = yearEntries.reduce((s, e) => s + (e.duration / 3600) * e.hourlyRate, 0);
-    let gst = 0, pst = 0;
+    const services: CurrencyTotals = {}, gst: CurrencyTotals = {}, pst: CurrencyTotals = {}, invoiced: CurrencyTotals = {};
     for (const c of customers) {
       const custProjectIds = new Set(projects.filter((p) => p.customerId === c.id).map((p) => p.id));
       const cEntries = yearEntries.filter((t) => custProjectIds.has(t.projectId));
       const cServices = cEntries.reduce((s, e) => s + (e.duration / 3600) * e.hourlyRate, 0);
       const { gst: gr, pst: pr } = customerTaxRates(c, taxSettings);
-      gst += cServices * gr;
-      pst += cServices * pr;
+      addToTotals(services, c.currency, cServices);
+      addToTotals(gst, c.currency, cServices * gr);
+      addToTotals(pst, c.currency, cServices * pr);
+      addToTotals(invoiced, c.currency, cServices * (1 + gr + pr));
     }
     const yearExp = expenses.filter((e) => {
       const t = new Date(e.date).getTime();
       return t >= start && t < end;
     });
-    const expTotal = yearExp.reduce((s, e) => s + e.total, 0);
-    const expGstItc = yearExp.reduce((s, e) => s + e.gst, 0);
+    const expTotal: CurrencyTotals = {}, expGstItc: CurrencyTotals = {}, netGst: CurrencyTotals = { ...gst };
+    for (const e of yearExp) {
+      addToTotals(expTotal, e.currency, e.total);
+      addToTotals(expGstItc, e.currency, e.gst);
+      addToTotals(netGst, e.currency, -e.gst);
+    }
     const totalHours = yearEntries.reduce((s, e) => s + e.duration / 3600, 0);
-    return { services, gst, pst, expTotal, expGstItc, totalHours, invoiced: services + gst + pst };
+    const currencies = new Set([...Object.keys(services), ...Object.keys(expTotal)].filter((c) => (services[c] ?? 0) !== 0 || (expTotal[c] ?? 0) !== 0));
+    return { services, gst, pst, expTotal, expGstItc, netGst, totalHours, invoiced, mixedCurrencies: currencies.size > 1 };
   }, [year, timesheets, expenses, customers, projects, taxSettings]);
 
-  const currency = customers[0]?.currency || "CAD";
 
   function downloadCustomer() {
     const customer = customers.find((c) => c.id === customerId);
@@ -77,7 +82,7 @@ function TaxReportsPage() {
   }
 
   function downloadExpenses() {
-    const doc = generateAnnualExpenseReport({ year, expenses, settings: taxSettings, currency });
+    const doc = generateAnnualExpenseReport({ year, expenses, settings: taxSettings });
     doc.save(`${year}-expense-summary.pdf`);
     toast.success("Expense summary downloaded");
   }
@@ -97,23 +102,30 @@ function TaxReportsPage() {
         }
       />
 
+      {summary.mixedCurrencies && (
+        <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          This year includes more than one currency, so totals are shown per currency. Convert foreign amounts to CAD
+          at the Bank of Canada rate before filing.
+        </p>
+      )}
+
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Income &amp; expenses</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard size="sm" label="Billable hours" value={summary.totalHours.toFixed(2)} />
-          <StatCard size="sm" label="Services income" value={formatMoney(summary.services, currency)} />
-          <StatCard size="sm" label="Total invoiced" value={formatMoney(summary.invoiced, currency)} />
-          <StatCard size="sm" label="Expenses (with GST ITC)" value={formatMoney(summary.expTotal, currency)} />
+          <StatCard size="sm" label="Services income" value={formatTotals(summary.services)} />
+          <StatCard size="sm" label="Total invoiced" value={formatTotals(summary.invoiced)} />
+          <StatCard size="sm" label="Expenses (with GST ITC)" value={formatTotals(summary.expTotal)} />
         </div>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Sales tax</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard size="sm" label="GST/HST collected" value={formatMoney(summary.gst, currency)} />
-          <StatCard size="sm" label="PST collected" value={formatMoney(summary.pst, currency)} />
-          <StatCard size="sm" label="GST ITC (paid)" value={formatMoney(summary.expGstItc, currency)} />
-          <StatCard size="sm" label="Net GST owed" value={formatMoney(summary.gst - summary.expGstItc, currency)} />
+          <StatCard size="sm" label="GST/HST collected" value={formatTotals(summary.gst)} />
+          <StatCard size="sm" label="PST collected" value={formatTotals(summary.pst)} />
+          <StatCard size="sm" label="GST ITC (paid)" value={formatTotals(summary.expGstItc)} />
+          <StatCard size="sm" label="Net GST owed" value={formatTotals(summary.netGst)} />
         </div>
       </section>
 

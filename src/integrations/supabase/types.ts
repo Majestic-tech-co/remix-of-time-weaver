@@ -164,6 +164,7 @@ export type Database = {
           gst: number
           id: string
           invoiced: boolean
+          invoice_number: string | null
           notes: string
           project_id: string | null
           pst: number
@@ -183,6 +184,7 @@ export type Database = {
           gst?: number
           id?: string
           invoiced?: boolean
+          invoice_number?: string | null
           notes?: string
           project_id?: string | null
           pst?: number
@@ -202,6 +204,7 @@ export type Database = {
           gst?: number
           id?: string
           invoiced?: boolean
+          invoice_number?: string | null
           notes?: string
           project_id?: string | null
           pst?: number
@@ -319,6 +322,8 @@ export type Database = {
           duration: number
           end_time: number
           hourly_rate: number
+          invoice_number: string | null
+          invoiced: boolean
           id: string
           project_id: string
           start_time: number
@@ -331,6 +336,8 @@ export type Database = {
           duration: number
           end_time: number
           hourly_rate: number
+          invoice_number?: string | null
+          invoiced?: boolean
           id?: string
           project_id: string
           start_time: number
@@ -343,6 +350,8 @@ export type Database = {
           duration?: number
           end_time?: number
           hourly_rate?: number
+          invoice_number?: string | null
+          invoiced?: boolean
           id?: string
           project_id?: string
           start_time?: number
