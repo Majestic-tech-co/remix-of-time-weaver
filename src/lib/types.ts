@@ -83,6 +83,12 @@ export interface TaxSettings {
   chargePst: boolean;
 }
 
+// Currencies offered for customers; add codes here to support more.
+export const CUSTOMER_CURRENCIES = [
+  { code: "USD", label: "USD — US dollar" },
+  { code: "CAD", label: "CAD — Canadian dollar" },
+] as const;
+
 export const EXPENSE_CATEGORIES = [
   "Meals & Entertainment (50%)",
   "Vehicle",

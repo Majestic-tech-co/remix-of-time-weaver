@@ -10,7 +10,8 @@ import { PageHeader } from "@/components/page-header";
 import { StatusDot } from "@/components/status-dot";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/format";
-import type { Customer } from "@/lib/types";
+import { CUSTOMER_CURRENCIES, type Customer } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/customers")({
@@ -124,7 +125,17 @@ function CustomerDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
           <div><Label className="mb-1.5 block text-xs text-muted-foreground">Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label className="mb-1.5 block text-xs text-muted-foreground">Company</Label><Input value={company} onChange={(e) => setCompany(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label className="mb-1.5 block text-xs text-muted-foreground">Currency</Label><Input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} maxLength={3} /></div>
+            <div>
+              <Label className="mb-1.5 block text-xs text-muted-foreground">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CUSTOMER_CURRENCIES.map((c) => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
+                  {/* Keep a customer's existing currency selectable even if it's not in the list. */}
+                  {!CUSTOMER_CURRENCIES.some((c) => c.code === currency) && <SelectItem value={currency}>{currency}</SelectItem>}
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label className="mb-1.5 block text-xs text-muted-foreground">Hourly rate</Label><Input type="number" value={rate} onChange={(e) => setRate(e.target.value)} /></div>
           </div>
           <div className="flex items-center gap-2"><Switch id="cact" checked={active} onCheckedChange={setActive} /><Label htmlFor="cact">Active</Label></div>
